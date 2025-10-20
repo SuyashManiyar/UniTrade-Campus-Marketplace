@@ -1,6 +1,6 @@
-# UniTrade - Full Stack Application
+# UMass Marketplace
 
-A modern full-stack application built with Next.js, Express, TypeScript, and PostgreSQL.
+A secure web application that helps the UMass Amherst community buy and sell used goods by matching buyers and sellers. The platform enables users to trade second-hand items such as furniture, textbooks, fans, bikes, and electronics within a safe and structured campus environment.
 
 ## 🚀 Tech Stack
 
@@ -26,7 +26,7 @@ A modern full-stack application built with Next.js, Express, TypeScript, and Pos
 ## 📁 Project Structure
 
 ```
-UniTrade/
+UMass-Marketplace/
 ├── frontend/                 # Next.js frontend application
 │   ├── src/
 │   │   ├── app/             # App Router pages
@@ -61,7 +61,7 @@ UniTrade/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd UniTrade
+   cd UMass-Marketplace
    ```
 
 2. **Install all dependencies**
@@ -81,9 +81,10 @@ UniTrade/
    cp frontend/.env.example frontend/.env.local
    ```
 
-4. **Configure your database**
+4. **Configure your database and email**
    - Update the `DATABASE_URL` in `backend/.env` with your PostgreSQL connection string
-   - Example: `postgresql://username:password@localhost:5432/unitrade_db?schema=public`
+   - Example: `postgresql://username:password@localhost:5432/umass_marketplace?schema=public`
+   - Configure email settings for verification codes (SMTP_HOST, SMTP_USER, SMTP_PASS)
 
 5. **Set up the database**
    ```bash
@@ -156,12 +157,14 @@ npm run db:studio
 
 ### Database Schema
 
-The application includes example models in `backend/prisma/schema.prisma`:
+The application includes the following models in `backend/prisma/schema.prisma`:
 
-- **User** - User management
-- **Post** - Example content model
-
-You can modify these models based on your application requirements.
+- **User** - UMass community members with email verification
+- **Listing** - Items for sale (direct sale or auction)
+- **Bid** - Auction bids
+- **Message** - In-app messaging between users
+- **Review** - User ratings and reviews
+- **Report** - Safety reporting system
 
 ## 🔧 Configuration
 
@@ -173,6 +176,10 @@ You can modify these models based on your application requirements.
 - `NODE_ENV` - Environment (development/production)
 - `FRONTEND_URL` - Frontend URL for CORS
 - `JWT_SECRET` - JWT signing secret
+- `SMTP_HOST` - Email server host
+- `SMTP_PORT` - Email server port
+- `SMTP_USER` - Email username
+- `SMTP_PASS` - Email password
 
 **Frontend (.env.local)**
 - `NEXT_PUBLIC_API_URL` - Backend API URL

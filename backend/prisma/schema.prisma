@@ -6,30 +6,153 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-// Example models - you can modify these based on your requirements
+enum UserRole {
+  STUDENT
+  STAFF
+  ADMIN
+}
+
+enum ItemCategory {
+  ELECTRONICS
+  FURNITURE
+  TEXTBOOKS
+  BIKES
+  CLOTHING
+  OTHER
+}
+
+enum ItemCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  POOR
+}
+
+enum ListingType {
+  DIRECT_SALE
+  AUCTION
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  EXPIRED
+  CANCELLED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  pronouns    String?
+  major       String?
+  location    String?
+  bio         String?
+  role        UserRole @default(STUDENT)
+  isVerified  Boolean  @default(false)
+  rating      Float?
+  ratingCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  listings         Listing[]
+  bids            Bid[]
+  sentMessages    Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  givenReviews    Review[]  @relation("ReviewGiver")
+  receivedReviews Review[]  @relation("ReviewReceiver")
+  reports         Report[]
 
   @@map("users")
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  category    ItemCategory
+  condition   ItemCondition
+  price       Float
+  images      String? // JSON string of image URLs
+  type        ListingType   @default(DIRECT_SALE)
+  status      ListingStatus @default(ACTIVE)
+  
+  // Auction specific fields
+  startingBid    Float?
+  currentBid     Float?
+  bidIncrement   Float?
+  auctionEndTime DateTime?
+  
+  sellerId    String
+  seller      User      @relation(fields: [sellerId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  bids        Bid[]
+  messages    Message[]
+  reports     Report[]
 
-  @@map("posts")
+  @@map("listings")
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  amount    Float
+  bidderId  String
+  bidder    User     @relation(fields: [bidderId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("bids")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int      // 1-5 stars
+  comment    String?
+  reviewerId String
+  reviewer   User     @relation("ReviewGiver", fields: [reviewerId], references: [id])
+  revieweeId String
+  reviewee   User     @relation("ReviewReceiver", fields: [revieweeId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([reviewerId, revieweeId])
+  @@map("reviews")
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  reason    String
+  details   String?
+  reporterId String
+  reporter  User     @relation(fields: [reporterId], references: [id])
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("reports")
 }

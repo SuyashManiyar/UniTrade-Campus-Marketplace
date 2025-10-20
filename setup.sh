@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# UniTrade Development Setup Script
-echo "🚀 Setting up UniTrade development environment..."
+# UMass Marketplace Development Setup Script
+echo "🚀 Setting up UMass Marketplace development environment..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -51,16 +51,18 @@ echo ""
 echo "🎉 Setup complete! Next steps:"
 echo ""
 echo "1. Update your database connection in backend/.env:"
-echo "   DATABASE_URL=\"postgresql://username:password@localhost:5432/unitrade_db?schema=public\""
+echo "   DATABASE_URL=\"postgresql://username:password@localhost:5432/umass_marketplace?schema=public\""
 echo ""
-echo "2. Create your database:"
-echo "   createdb unitrade_db"
+echo "2. Set up email configuration in backend/.env for verification codes"
 echo ""
-echo "3. Set up the database schema:"
+echo "3. Create your database:"
+echo "   createdb umass_marketplace"
+echo ""
+echo "4. Set up the database schema:"
 echo "   npm run db:generate"
 echo "   npm run db:push"
 echo ""
-echo "4. Start the development servers:"
+echo "5. Start the development servers:"
 echo "   npm run dev"
 echo ""
 echo "🌐 Frontend will be available at: http://localhost:3000"

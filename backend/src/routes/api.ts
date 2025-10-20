@@ -1,22 +1,26 @@
 import { Router } from 'express';
+import authRoutes from './auth';
+import userRoutes from './users';
+import listingRoutes from './listings';
+import messageRoutes from './messages';
+import adminRoutes from './admin';
 
 const router = Router();
 
-// Example API routes
+// Health check
 router.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    message: 'API is working!',
+    message: 'UMass Marketplace API is working!',
     timestamp: new Date().toISOString()
   });
 });
 
-router.get('/users', (req, res) => {
-  // Example endpoint - replace with actual implementation
-  res.json({ 
-    message: 'Users endpoint',
-    data: []
-  });
-});
+// Route handlers
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/listings', listingRoutes);
+router.use('/messages', messageRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;
