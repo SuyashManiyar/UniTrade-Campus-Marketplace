@@ -20,7 +20,13 @@
     "db:studio": "cd backend && npx prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["nextjs", "express", "typescript", "prisma", "postgresql"],
+  "keywords": [
+    "nextjs",
+    "express",
+    "typescript",
+    "prisma",
+    "postgresql"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {

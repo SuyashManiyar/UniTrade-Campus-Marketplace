@@ -15,7 +15,7 @@ const verificationCodes = new Map<string, { code: string; expires: Date; userDat
 router.post('/register', requireUMassEmail, async (req, res) => {
   try {
     const validatedData = registerSchema.parse(req.body);
-    
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: validatedData.email }
@@ -38,14 +38,14 @@ router.post('/register', requireUMassEmail, async (req, res) => {
 
     // Send verification email
     const emailSent = await sendVerificationEmail(validatedData.email, code);
-    
+
     if (!emailSent) {
       return res.status(500).json({ error: 'Failed to send verification email' });
     }
 
-    res.json({ 
+    res.json({
       message: 'Verification code sent to your email',
-      email: validatedData.email 
+      email: validatedData.email
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -61,9 +61,9 @@ router.post('/register', requireUMassEmail, async (req, res) => {
 router.post('/verify', async (req, res) => {
   try {
     const { email, code } = loginSchema.parse(req.body);
-    
+
     const storedData = verificationCodes.get(email);
-    
+
     if (!storedData) {
       return res.status(400).json({ error: 'Verification code not found or expired' });
     }
@@ -155,7 +155,7 @@ router.post('/verify', async (req, res) => {
 router.post('/login', requireUMassEmail, async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { email }
@@ -177,14 +177,14 @@ router.post('/login', requireUMassEmail, async (req, res) => {
 
     // Send verification email
     const emailSent = await sendVerificationEmail(email, code);
-    
+
     if (!emailSent) {
       return res.status(500).json({ error: 'Failed to send verification email' });
     }
 
-    res.json({ 
+    res.json({
       message: 'Verification code sent to your email',
-      email 
+      email
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -196,7 +196,7 @@ router.post('/login', requireUMassEmail, async (req, res) => {
 router.post('/resend-code', requireUMassEmail, async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     const storedData = verificationCodes.get(email);
     if (!storedData) {
       return res.status(400).json({ error: 'No pending verification for this email' });
@@ -215,7 +215,7 @@ router.post('/resend-code', requireUMassEmail, async (req, res) => {
 
     // Send verification email
     const emailSent = await sendVerificationEmail(email, code);
-    
+
     if (!emailSent) {
       return res.status(500).json({ error: 'Failed to send verification email' });
     }
@@ -232,14 +232,14 @@ router.get('/dev/codes', async (req, res) => {
   if (process.env.NODE_ENV !== 'development') {
     return res.status(404).json({ error: 'Not found' });
   }
-  
+
   const codes = Array.from(verificationCodes.entries()).map(([email, data]) => ({
     email,
     code: data.code,
     expires: data.expires,
     hasUserData: !!data.userData
   }));
-  
+
   res.json({ codes });
 });
 
