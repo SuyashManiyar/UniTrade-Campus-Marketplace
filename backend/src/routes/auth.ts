@@ -36,13 +36,12 @@ router.post('/register', requireUMassEmail, async (req, res) => {
       userData: validatedData
     });
 
-    // Send verification email (skip for development)
-    console.log(`Verification code for ${validatedData.email}: ${code}`);
-    // const emailSent = await sendVerificationEmail(validatedData.email, code);
+    // Send verification email
+    const emailSent = await sendVerificationEmail(validatedData.email, code);
     
-    // if (!emailSent) {
-    //   return res.status(500).json({ error: 'Failed to send verification email' });
-    // }
+    if (!emailSent) {
+      return res.status(500).json({ error: 'Failed to send verification email' });
+    }
 
     res.json({ 
       message: 'Verification code sent to your email',
@@ -176,13 +175,12 @@ router.post('/login', requireUMassEmail, async (req, res) => {
       expires
     });
 
-    // Send verification email (skip for development)
-    console.log(`Login verification code for ${email}: ${code}`);
-    // const emailSent = await sendVerificationEmail(email, code);
+    // Send verification email
+    const emailSent = await sendVerificationEmail(email, code);
     
-    // if (!emailSent) {
-    //   return res.status(500).json({ error: 'Failed to send verification email' });
-    // }
+    if (!emailSent) {
+      return res.status(500).json({ error: 'Failed to send verification email' });
+    }
 
     res.json({ 
       message: 'Verification code sent to your email',
@@ -215,13 +213,12 @@ router.post('/resend-code', requireUMassEmail, async (req, res) => {
       expires
     });
 
-    // Send verification email (skip for development)
-    console.log(`Resend verification code for ${email}: ${code}`);
-    // const emailSent = await sendVerificationEmail(email, code);
+    // Send verification email
+    const emailSent = await sendVerificationEmail(email, code);
     
-    // if (!emailSent) {
-    //   return res.status(500).json({ error: 'Failed to send verification email' });
-    // }
+    if (!emailSent) {
+      return res.status(500).json({ error: 'Failed to send verification email' });
+    }
 
     res.json({ message: 'New verification code sent' });
   } catch (error) {

@@ -36,10 +36,12 @@ export default function Register() {
 
   const registerForm = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    mode: 'onSubmit',
   })
 
   const verifyForm = useForm<VerifyForm>({
     resolver: zodResolver(verifySchema),
+    mode: 'onSubmit',
   })
 
   const onRegister = async (data: RegisterForm) => {

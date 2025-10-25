@@ -27,7 +27,7 @@ interface Listing {
 }
 
 export default function ListingsPage() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
@@ -124,6 +124,12 @@ export default function ListingsPage() {
               >
                 Post Item
               </Link>
+              <button
+                onClick={logout}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

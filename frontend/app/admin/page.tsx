@@ -38,7 +38,7 @@ interface Listing {
 }
 
 export default function AdminDashboard() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'reports'>('overview')
   const [users, setUsers] = useState<User[]>([])
@@ -134,6 +134,12 @@ export default function AdminDashboard() {
               >
                 Back to Marketplace
               </Link>
+              <button
+                onClick={logout}
+                className="bg-red-200 text-red-700 px-4 py-2 rounded-md hover:bg-red-300"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

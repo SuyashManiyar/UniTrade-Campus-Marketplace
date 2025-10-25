@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 
 export default function Marketplace() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -54,6 +54,12 @@ export default function Marketplace() {
               >
                 Post Item
               </Link>
+              <button
+                onClick={logout}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
