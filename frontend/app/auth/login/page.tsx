@@ -54,7 +54,7 @@ export default function Login() {
         email,
         code: data.code,
       })
-      
+
       login(response.data.token, response.data.user)
       toast.success('Login successful!')
       router.push('/marketplace')
@@ -96,7 +96,7 @@ export default function Login() {
                     {...verifyForm.register('code')}
                     type="text"
                     placeholder="Enter 6-digit code"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                   />
                   {verifyForm.formState.errors.code && (
                     <p className="mt-2 text-sm text-red-600">
@@ -158,7 +158,7 @@ export default function Login() {
                   {...loginForm.register('email')}
                   type="email"
                   placeholder="your-name@umass.edu"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
                 {loginForm.formState.errors.email && (
                   <p className="mt-2 text-sm text-red-600">

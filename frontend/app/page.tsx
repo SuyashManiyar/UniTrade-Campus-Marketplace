@@ -31,10 +31,10 @@ export default function Home() {
             UMass Marketplace
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Buy and sell second-hand goods safely within the UMass Amherst community. 
+            Buy and sell second-hand goods safely within the UMass Amherst community.
             Connect with fellow students and staff for fair-priced items.
           </p>
-          
+
           <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
             <Link
               href="/auth/register"
@@ -46,7 +46,7 @@ export default function Home() {
               href="/auth/login"
               className="inline-block bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-umass-maroon transition-colors"
             >
-              Sign In
+              Log In
             </Link>
           </div>
         </div>
