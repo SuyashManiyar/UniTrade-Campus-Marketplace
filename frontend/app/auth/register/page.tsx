@@ -61,7 +61,7 @@ export default function Register() {
         email,
         code: data.code,
       })
-      
+
       login(response.data.token, response.data.user)
       toast.success('Registration successful!')
       router.push('/marketplace')
@@ -103,7 +103,7 @@ export default function Register() {
                     {...verifyForm.register('code')}
                     type="text"
                     placeholder="Enter 6-digit code"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                   />
                   {verifyForm.formState.errors.code && (
                     <p className="mt-2 text-sm text-red-600">
@@ -165,7 +165,7 @@ export default function Register() {
                   {...registerForm.register('email')}
                   type="email"
                   placeholder="your-name@umass.edu"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
                 {registerForm.formState.errors.email && (
                   <p className="mt-2 text-sm text-red-600">
@@ -183,7 +183,7 @@ export default function Register() {
                 <input
                   {...registerForm.register('name')}
                   type="text"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
                 {registerForm.formState.errors.name && (
                   <p className="mt-2 text-sm text-red-600">
@@ -203,7 +203,7 @@ export default function Register() {
                     {...registerForm.register('pronouns')}
                     type="text"
                     placeholder="they/them"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                   />
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function Register() {
                     {...registerForm.register('major')}
                     type="text"
                     placeholder="Computer Science"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                   />
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function Register() {
                   {...registerForm.register('location')}
                   type="text"
                   placeholder="Southwest, Orchard Hill, etc."
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function Register() {
                   {...registerForm.register('bio')}
                   rows={3}
                   placeholder="Tell us a bit about yourself..."
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
               </div>
             </div>
