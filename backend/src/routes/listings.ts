@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { listingSchema, bidSchema } from '../utils/validation';
+import { uploadImages, handleUploadError, getFileUrl } from '../middleware/upload';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -140,14 +141,31 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create listing
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticateToken, uploadImages, handleUploadError, async (req: AuthRequest, res: any) => {
   try {
-    const validatedData = listingSchema.parse(req.body);
+    // Parse form data - numbers need to be converted from strings
+    const formData = {
+      ...req.body,
+      price: req.body.price ? parseFloat(req.body.price) : undefined,
+      startingBid: req.body.startingBid ? parseFloat(req.body.startingBid) : undefined,
+      bidIncrement: req.body.bidIncrement ? parseFloat(req.body.bidIncrement) : undefined,
+    };
+
+    const validatedData = listingSchema.parse(formData);
     const userId = req.user!.id;
+
+    // Handle uploaded images
+    const imageUrls: string[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      req.files.forEach((file: Express.Multer.File) => {
+        imageUrls.push(getFileUrl(file.filename));
+      });
+    }
 
     const listingData: any = {
       ...validatedData,
-      sellerId: userId
+      sellerId: userId,
+      images: imageUrls.length > 0 ? JSON.stringify(imageUrls) : null
     };
 
     // Handle auction-specific fields

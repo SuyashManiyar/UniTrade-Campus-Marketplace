@@ -16,6 +16,7 @@ interface Listing {
   type: string
   status: string
   createdAt: string
+  images?: string | null
   currentBid?: number
   startingBid?: number
   bids: Array<{
@@ -32,6 +33,43 @@ export default function MyListings() {
   const router = useRouter()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Helper function to get the first image from images JSON
+  const getFirstImage = (images: string | null | undefined): string | null => {
+    if (!images) return null
+    try {
+      const imageArray = JSON.parse(images)
+      if (Array.isArray(imageArray) && imageArray.length > 0) {
+        let imageUrl = imageArray[0]
+        
+        // If URL is relative, make it absolute
+        if (imageUrl.startsWith('/uploads/')) {
+          // Extract filename and encode it properly
+          const filename = imageUrl.replace('/uploads/', '')
+          const encodedFilename = encodeURIComponent(filename)
+          const fullUrl = `http://localhost:8080/uploads/${encodedFilename}`
+          return fullUrl
+        }
+        return imageUrl
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  // Helper function to get category icon
+  const getCategoryIcon = (category: string): string => {
+    const icons: { [key: string]: string } = {
+      'ELECTRONICS': '📱',
+      'FURNITURE': '🪑',
+      'TEXTBOOKS': '📚',
+      'BIKES': '🚲',
+      'CLOTHING': '👕',
+      'OTHER': '📦'
+    }
+    return icons[category] || '📦'
+  }
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -160,84 +198,120 @@ export default function MyListings() {
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {listings.map((listing) => (
-                <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
-                        {listing.title}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(listing.status)}`}>
-                        {listing.status}
-                      </span>
-                    </div>
-                    
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {listing.description}
-                    </p>
-                    
-                    <div className="space-y-2 mb-4">
-                      {listing.type === 'DIRECT_SALE' && listing.price && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Price:</span>
-                          <span className="font-medium">${listing.price}</span>
+              {listings.map((listing) => {
+                const firstImage = getFirstImage(listing.images)
+                
+                return (
+                  <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
+                    {/* Image Section */}
+                    <div className="relative h-40 bg-gray-100">
+                      {firstImage ? (
+                        <img
+                          src={firstImage}
+                          alt={listing.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                          }}
+                        />
+                      ) : null}
+                      
+                      {/* Fallback placeholder */}
+                      <div className={`${firstImage ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200`}>
+                        <div className="text-center">
+                          <div className="text-3xl mb-1">{getCategoryIcon(listing.category)}</div>
+                          <div className="text-xs text-gray-500">
+                            {listing.category.replace('_', ' ')}
+                          </div>
                         </div>
-                      )}
-                      {listing.type === 'AUCTION' && (
-                        <>
-                          {listing.startingBid && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Starting Bid:</span>
-                              <span className="font-medium">${listing.startingBid}</span>
-                            </div>
-                          )}
-                          {listing.currentBid && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Current Bid:</span>
-                              <span className="font-medium text-green-600">${listing.currentBid}</span>
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Category:</span>
-                        <span>{listing.category}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Condition:</span>
-                        <span>{listing.condition}</span>
+
+                      {/* Status Badge */}
+                      <div className="absolute top-2 right-2">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full backdrop-blur-sm ${getStatusColor(listing.status)}`}>
+                          {listing.status}
+                        </span>
                       </div>
-                      {listing.bids.length > 0 && (
+                    </div>
+
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {listing.title}
+                        </h3>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {listing.description}
+                      </p>
+                      
+                      <div className="space-y-2 mb-4">
+                        {listing.type === 'DIRECT_SALE' && listing.price && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Price:</span>
+                            <span className="font-medium text-umass-maroon">${listing.price}</span>
+                          </div>
+                        )}
+                        {listing.type === 'AUCTION' && (
+                          <>
+                            {listing.startingBid && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Starting Bid:</span>
+                                <span className="font-medium">${listing.startingBid}</span>
+                              </div>
+                            )}
+                            {listing.currentBid && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Current Bid:</span>
+                                <span className="font-medium text-green-600">${listing.currentBid}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Bids:</span>
-                          <span>{listing.bids.length}</span>
+                          <span className="text-gray-500">Category:</span>
+                          <span className="flex items-center">
+                            <span className="mr-1">{getCategoryIcon(listing.category)}</span>
+                            {listing.category.replace('_', ' ')}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 mb-4">
-                      Created: {new Date(listing.createdAt).toLocaleDateString()}
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Link
-                        href={`/marketplace/listings/${listing.id}`}
-                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
-                      >
-                        View
-                      </Link>
-                      {listing.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => handleDeleteListing(listing.id)}
-                          className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Condition:</span>
+                          <span>{listing.condition.replace('_', ' ')}</span>
+                        </div>
+                        {listing.bids.length > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Bids:</span>
+                            <span className="font-medium text-blue-600">{listing.bids.length}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-xs text-gray-500 mb-4">
+                        Created: {new Date(listing.createdAt).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Link
+                          href={`/marketplace/listings/${listing.id}`}
+                          className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
                         >
-                          Delete
-                        </button>
-                      )}
+                          View
+                        </Link>
+                        {listing.status === 'ACTIVE' && (
+                          <button
+                            onClick={() => handleDeleteListing(listing.id)}
+                            className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

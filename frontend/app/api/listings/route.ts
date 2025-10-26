@@ -36,15 +36,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const data = await request.json()
+    // Get FormData from request
+    const formData = await request.formData()
 
+    // Forward FormData to backend with auth header
     const response = await fetch(`${BACKEND_URL}/api/listings`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
+        // Don't set Content-Type for FormData, let fetch handle it
       },
-      body: JSON.stringify(data)
+      body: formData
     })
 
     const result = await response.json()

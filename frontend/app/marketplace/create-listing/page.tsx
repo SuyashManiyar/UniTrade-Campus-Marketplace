@@ -74,16 +74,24 @@ export default function CreateListing() {
         }
       }
 
-      // Note: Image upload will be implemented later
-      // For now, we'll just create the listing without images
-      console.log('Selected images:', images.map(img => img.name))
+      // Create FormData to handle both data and files
+      const formDataToSend = new FormData()
+      
+      // Add all form fields
+      Object.entries(listingData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formDataToSend.append(key, value.toString())
+        }
+      })
+      
+      // Add image files
+      images.forEach((image) => {
+        formDataToSend.append('images', image)
+      })
 
       const response = await fetch('/api/listings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(listingData),
+        body: formDataToSend, // Don't set Content-Type header, let browser set it with boundary
       })
 
       if (response.ok) {
