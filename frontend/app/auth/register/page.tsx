@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import OTPInput from '@/components/OTPInput'
 
 const registerSchema = z.object({
   email: z.string().email().refine(email => email.endsWith('@umass.edu'), {
@@ -70,6 +71,21 @@ export default function Register() {
     }
   }
 
+  const handleOTPComplete = async (otp: string) => {
+    try {
+      const response = await api.post('/auth/verify', {
+        email,
+        code: otp,
+      })
+      
+      login(response.data.token, response.data.user)
+      toast.success('Registration successful!')
+      router.push('/marketplace')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Verification failed')
+    }
+  }
+
   const resendCode = async () => {
     try {
       await api.post('/auth/resend-code', { email })
@@ -93,46 +109,38 @@ export default function Register() {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <form onSubmit={verifyForm.handleSubmit(onVerify)} className="space-y-6">
+            <div className="space-y-6">
               <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700">
-                  Verification Code
+                <label className="block text-sm font-medium text-gray-700 text-center mb-4">
+                  Enter Verification Code
                 </label>
-                <div className="mt-1">
-                  <input
-                    {...verifyForm.register('code')}
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
-                  />
-                  {verifyForm.formState.errors.code && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {verifyForm.formState.errors.code.message}
-                    </p>
-                  )}
-                </div>
+                <OTPInput 
+                  length={6}
+                  onComplete={handleOTPComplete}
+                  loading={verifyForm.formState.isSubmitting}
+                />
               </div>
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={verifyForm.formState.isSubmitting}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-umass-maroon hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-umass-maroon disabled:opacity-50"
-                >
-                  {verifyForm.formState.isSubmitting ? 'Verifying...' : 'Verify Email'}
-                </button>
-              </div>
-
-              <div className="text-center">
+              <div className="text-center space-y-4">
+                <p className="text-sm text-gray-600">
+                  Code will be automatically verified when all digits are entered
+                </p>
+                
                 <button
                   type="button"
                   onClick={resendCode}
-                  className="text-sm text-umass-maroon hover:text-red-800"
+                  className="text-sm text-umass-maroon hover:text-red-800 underline"
                 >
                   Didn't receive the code? Resend
                 </button>
+                
+                <div className="text-xs text-gray-500">
+                  <Link href="/dev/codes" target="_blank" className="underline hover:text-gray-700">
+                    🔧 Dev: Check verification codes
+                  </Link>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
