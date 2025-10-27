@@ -161,8 +161,8 @@ export default function MyListings() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {listings.map((listing) => (
-                <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="p-6">
+                <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden flex flex-col h-full">
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
                         {listing.title}
@@ -176,11 +176,11 @@ export default function MyListings() {
                       {listing.description}
                     </p>
                     
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-2 mb-4 flex-grow">
                       {listing.type === 'DIRECT_SALE' && listing.price && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">Price:</span>
-                          <span className="font-medium">${listing.price}</span>
+                          <span className="font-medium text-gray-900">${listing.price}</span>
                         </div>
                       )}
                       {listing.type === 'AUCTION' && (
@@ -188,7 +188,7 @@ export default function MyListings() {
                           {listing.startingBid && (
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">Starting Bid:</span>
-                              <span className="font-medium">${listing.startingBid}</span>
+                              <span className="font-medium text-gray-900">${listing.startingBid}</span>
                             </div>
                           )}
                           {listing.currentBid && (
@@ -201,39 +201,50 @@ export default function MyListings() {
                       )}
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Category:</span>
-                        <span>{listing.category}</span>
+                        <span className="text-gray-900">{listing.category}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Condition:</span>
-                        <span>{listing.condition}</span>
+                        <span className="text-gray-900">{listing.condition}</span>
                       </div>
                       {listing.bids.length > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-500">Bids:</span>
-                          <span>{listing.bids.length}</span>
+                          <span className="text-gray-900">{listing.bids.length}</span>
                         </div>
                       )}
                     </div>
                     
-                    <div className="text-xs text-gray-500 mb-4">
-                      Created: {new Date(listing.createdAt).toLocaleDateString()}
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Link
-                        href={`/marketplace/listings/${listing.id}`}
-                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
-                      >
-                        View
-                      </Link>
-                      {listing.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => handleDeleteListing(listing.id)}
-                          className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
+                    {/* Bottom section - always at bottom */}
+                    <div className="mt-auto">
+                      <div className="text-xs text-gray-500 mb-4">
+                        Created: {new Date(listing.createdAt).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Link
+                          href={`/marketplace/listings/${listing.id}`}
+                          className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
                         >
-                          Delete
-                        </button>
-                      )}
+                          View
+                        </Link>
+                        {listing.status === 'ACTIVE' && (
+                          <>
+                            <Link
+                              href={`/marketplace/edit-listing/${listing.id}`}
+                              className="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm text-center hover:bg-blue-200"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteListing(listing.id)}
+                              className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
