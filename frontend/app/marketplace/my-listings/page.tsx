@@ -41,7 +41,7 @@ export default function MyListings() {
       const imageArray = JSON.parse(images)
       if (Array.isArray(imageArray) && imageArray.length > 0) {
         let imageUrl = imageArray[0]
-        
+
         // If URL is relative, make it absolute
         if (imageUrl.startsWith('/uploads/')) {
           // Extract filename and encode it properly
@@ -200,7 +200,7 @@ export default function MyListings() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {listings.map((listing) => {
                 const firstImage = getFirstImage(listing.images)
-                
+
                 return (
                   <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
                     {/* Image Section */}
@@ -216,7 +216,7 @@ export default function MyListings() {
                           }}
                         />
                       ) : null}
-                      
+
                       {/* Fallback placeholder */}
                       <div className={`${firstImage ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200`}>
                         <div className="text-center">
@@ -241,11 +241,11 @@ export default function MyListings() {
                           {listing.title}
                         </h3>
                       </div>
-                      
+
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                         {listing.description}
                       </p>
-                      
+
                       <div className="space-y-2 mb-4">
                         {listing.type === 'DIRECT_SALE' && listing.price && (
                           <div className="flex justify-between text-sm">
@@ -287,11 +287,11 @@ export default function MyListings() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="text-xs text-gray-500 mb-4">
                         Created: {new Date(listing.createdAt).toLocaleDateString()}
                       </div>
-                      
+
                       <div className="flex space-x-2">
                         <Link
                           href={`/marketplace/listings/${listing.id}`}
@@ -312,6 +312,95 @@ export default function MyListings() {
                   </div>
                 )
               })}
+              {listings.map((listing) => (
+                <div key={listing.id} className="bg-white rounded-lg shadow overflow-hidden flex flex-col h-full">
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {listing.title}
+                      </h3>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(listing.status)}`}>
+                        {listing.status}
+                      </span>
+                    </div>
+
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {listing.description}
+                    </p>
+
+                    <div className="space-y-2 mb-4 flex-grow">
+                      {listing.type === 'DIRECT_SALE' && listing.price && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Price:</span>
+                          <span className="font-medium text-gray-900">${listing.price}</span>
+                        </div>
+                      )}
+                      {listing.type === 'AUCTION' && (
+                        <>
+                          {listing.startingBid && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">Starting Bid:</span>
+                              <span className="font-medium text-gray-900">${listing.startingBid}</span>
+                            </div>
+                          )}
+                          {listing.currentBid && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">Current Bid:</span>
+                              <span className="font-medium text-green-600">${listing.currentBid}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Category:</span>
+                        <span className="text-gray-900">{listing.category}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Condition:</span>
+                        <span className="text-gray-900">{listing.condition}</span>
+                      </div>
+                      {listing.bids.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Bids:</span>
+                          <span className="text-gray-900">{listing.bids.length}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom section - always at bottom */}
+                    <div className="mt-auto">
+                      <div className="text-xs text-gray-500 mb-4">
+                        Created: {new Date(listing.createdAt).toLocaleDateString()}
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Link
+                          href={`/marketplace/listings/${listing.id}`}
+                          className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
+                        >
+                          View
+                        </Link>
+                        {listing.status === 'ACTIVE' && (
+                          <>
+                            <Link
+                              href={`/marketplace/edit-listing/${listing.id}`}
+                              className="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm text-center hover:bg-blue-200"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteListing(listing.id)}
+                              className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
