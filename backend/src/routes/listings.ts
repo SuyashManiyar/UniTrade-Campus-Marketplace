@@ -7,7 +7,7 @@ import { uploadImages, handleUploadError, getFileUrl } from '../middleware/uploa
 const router = Router();
 const prisma = new PrismaClient();
 
-// Get all listings with filters
+// Get all listings with advanced filters and search
 router.get('/', async (req, res) => {
   try {
     const {
@@ -17,43 +17,105 @@ router.get('/', async (req, res) => {
       minPrice,
       maxPrice,
       type,
+      sortBy = 'newest',
       page = '1',
       limit = '20'
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    // Input validation
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20)); // Max 50 items per page
     const skip = (pageNum - 1) * limitNum;
 
+    // Build where clause
     const where: any = {
       status: 'ACTIVE'
     };
 
-    if (search) {
+    // Simple search functionality (SQLite compatible)
+    if (search && typeof search === 'string' && search.trim().length > 0) {
+      const searchTerm = search.trim();
+
+      // Search only in title and description (category is enum-based)
       where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } }
+        { title: { startsWith: searchTerm } },
+        { description: { startsWith: searchTerm } }
       ];
     }
 
-    if (category) {
-      where.category = category;
+    // Category filter
+    if (category && typeof category === 'string') {
+      const validCategories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER'];
+      if (validCategories.includes(category.toUpperCase())) {
+        where.category = category.toUpperCase();
+      }
     }
 
-    if (condition) {
-      where.condition = condition;
+    // Condition filter
+    if (condition && typeof condition === 'string') {
+      const validConditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR'];
+      if (validConditions.includes(condition.toUpperCase())) {
+        where.condition = condition.toUpperCase();
+      }
     }
 
-    if (type) {
-      where.type = type;
+    // Type filter
+    if (type && typeof type === 'string') {
+      const validTypes = ['DIRECT_SALE', 'AUCTION'];
+      if (validTypes.includes(type.toUpperCase())) {
+        where.type = type.toUpperCase();
+      }
     }
 
+    // Price range filter with validation
     if (minPrice || maxPrice) {
       where.price = {};
-      if (minPrice) where.price.gte = parseFloat(minPrice as string);
-      if (maxPrice) where.price.lte = parseFloat(maxPrice as string);
+
+      if (minPrice) {
+        const min = parseFloat(minPrice as string);
+        if (!isNaN(min) && min >= 0) {
+          where.price.gte = min;
+        }
+      }
+
+      if (maxPrice) {
+        const max = parseFloat(maxPrice as string);
+        if (!isNaN(max) && max >= 0) {
+          where.price.lte = max;
+
+          // Ensure minPrice <= maxPrice
+          if (where.price.gte && max < where.price.gte) {
+            return res.status(400).json({
+              error: 'Maximum price must be greater than or equal to minimum price'
+            });
+          }
+        }
+      }
     }
 
+    // Determine sort order
+    let orderBy: any = { createdAt: 'desc' }; // Default: newest first
+
+    switch (sortBy) {
+      case 'oldest':
+        orderBy = { createdAt: 'asc' };
+        break;
+      case 'price_low':
+        orderBy = { price: 'asc' };
+        break;
+      case 'price_high':
+        orderBy = { price: 'desc' };
+        break;
+      case 'title':
+        orderBy = { title: 'asc' };
+        break;
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+
+    // Execute queries in parallel for better performance
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
         where,
@@ -63,7 +125,8 @@ router.get('/', async (req, res) => {
               id: true,
               name: true,
               rating: true,
-              ratingCount: true
+              ratingCount: true,
+              location: true
             }
           },
           bids: {
@@ -74,14 +137,22 @@ router.get('/', async (req, res) => {
                 select: { id: true, name: true }
               }
             }
+          },
+          _count: {
+            select: { bids: true }
           }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limitNum
       }),
       prisma.listing.count({ where })
     ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
 
     res.json({
       listings,
@@ -89,12 +160,34 @@ router.get('/', async (req, res) => {
         page: pageNum,
         limit: limitNum,
         total,
-        pages: Math.ceil(total / limitNum)
+        pages: totalPages,
+        hasNextPage,
+        hasPrevPage
+      },
+      filters: {
+        search: search || null,
+        category: category || null,
+        condition: condition || null,
+        minPrice: minPrice ? parseFloat(minPrice as string) : null,
+        maxPrice: maxPrice ? parseFloat(maxPrice as string) : null,
+        type: type || null,
+        sortBy: sortBy || 'newest'
       }
     });
   } catch (error) {
     console.error('Get listings error:', error);
-    res.status(500).json({ error: 'Failed to fetch listings' });
+
+    // More specific error handling
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid')) {
+        return res.status(400).json({ error: 'Invalid search parameters' });
+      }
+    }
+
+    res.status(500).json({
+      error: 'Failed to fetch listings',
+      message: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+    });
   }
 });
 
@@ -171,11 +264,11 @@ router.post('/', authenticateToken, uploadImages, handleUploadError, async (req:
     // Handle auction-specific fields
     if (validatedData.type === 'AUCTION') {
       if (!validatedData.startingBid || !validatedData.auctionEndTime) {
-        return res.status(400).json({ 
-          error: 'Starting bid and auction end time required for auctions' 
+        return res.status(400).json({
+          error: 'Starting bid and auction end time required for auctions'
         });
       }
-      
+
       listingData.currentBid = validatedData.startingBid;
       listingData.auctionEndTime = new Date(validatedData.auctionEndTime);
     }
@@ -330,8 +423,8 @@ router.post('/:id/bid', authenticateToken, async (req: AuthRequest, res) => {
     const minimumBid = currentHighestBid + (listing.bidIncrement || 1);
 
     if (amount < minimumBid) {
-      return res.status(400).json({ 
-        error: `Bid must be at least $${minimumBid}` 
+      return res.status(400).json({
+        error: `Bid must be at least $${minimumBid}`
       });
     }
 
