@@ -98,6 +98,20 @@ UMass-Marketplace/
    npm run db:migrate
    ```
 
+6. **Seed the database with dummy data (optional)**
+   ```bash
+   # Navigate to backend directory
+   cd backend
+   
+   # Run the seed script to add 50 dummy listings
+   npm run seed
+   ```
+   
+   This will create:
+   - 5 dummy users with UMass email addresses
+   - 50 sample listings including laptops, furniture, textbooks, bikes, and other student items
+   - Various categories: Electronics, Furniture, Textbooks, Bikes, Clothing, and Other
+
 ## 🚀 Development
 
 ### Start Development Servers
@@ -204,6 +218,7 @@ The application includes the following models in `backend/prisma/schema.prisma`:
 - `npm run dev` - Start development server with nodemon
 - `npm run build` - Compile TypeScript
 - `npm run start` - Start production server
+- `npm run seed` - Populate database with dummy data
 
 ## 🚀 Deployment
 
