@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:5000/api/listings
+http://localhost:8080/api/listings
 ```
 
 ## 1. View All Listings (Browse with Filters)

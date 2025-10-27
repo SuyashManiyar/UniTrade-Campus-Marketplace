@@ -17,6 +17,7 @@ interface Listing {
   type: string
   status: string
   createdAt: string
+  images?: string
   seller: {
     id: string
     name: string
@@ -40,12 +41,52 @@ export default function ListingsPage() {
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
 
+  // Helper function to get the first image from images JSON
+  const getFirstImage = (images: string | null | undefined): string | null => {
+    if (!images) return null
+    try {
+      const imageArray = JSON.parse(images)
+      if (Array.isArray(imageArray) && imageArray.length > 0) {
+        let imageUrl = imageArray[0]
+
+        // If URL is relative, make it absolute
+        if (imageUrl.startsWith('/uploads/')) {
+          // Extract filename and encode it properly
+          const filename = imageUrl.replace('/uploads/', '')
+          const encodedFilename = encodeURIComponent(filename)
+          const fullUrl = `http://localhost:8080/uploads/${encodedFilename}`
+          console.log('Image URL constructed:', fullUrl)
+          return fullUrl
+        }
+        console.log('Image URL (absolute):', imageUrl)
+        return imageUrl
+      }
+      return null
+    } catch (error) {
+      console.error('Error parsing images JSON:', error, images)
+      return null
+    }
+  }
+
+  // Helper function to get category icon
+  const getCategoryIcon = (category: string): string => {
+    const icons: { [key: string]: string } = {
+      'ELECTRONICS': '📱',
+      'FURNITURE': '🪑',
+      'TEXTBOOKS': '📚',
+      'BIKES': '🚲',
+      'CLOTHING': '👕',
+      'OTHER': '📦'
+    }
+    return icons[category] || '📦'
+  }
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/auth/login')
       return
     }
-    
+
     if (user) {
       fetchListings()
     }
@@ -55,7 +96,7 @@ export default function ListingsPage() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
-      
+
       if (searchTerm) params.append('search', searchTerm)
       if (selectedCategory) params.append('category', selectedCategory)
       if (selectedCondition) params.append('condition', selectedCondition)
@@ -118,7 +159,7 @@ export default function ListingsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
-              <Link 
+              <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
               >
@@ -139,7 +180,7 @@ export default function ListingsPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Browse Listings</h1>
-            
+
             {/* Search and Filters */}
             <div className="bg-white p-6 rounded-lg shadow mb-6">
               <form onSubmit={handleSearch} className="space-y-4">
@@ -153,7 +194,7 @@ export default function ListingsPage() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search listings..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     />
                   </div>
 
@@ -164,7 +205,7 @@ export default function ListingsPage() {
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     >
                       <option value="">All Categories</option>
                       {categories.map(category => (
@@ -182,7 +223,7 @@ export default function ListingsPage() {
                     <select
                       value={selectedCondition}
                       onChange={(e) => setSelectedCondition(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     >
                       <option value="">All Conditions</option>
                       {conditions.map(condition => (
@@ -202,7 +243,7 @@ export default function ListingsPage() {
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
                       placeholder="$0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     />
                   </div>
 
@@ -215,7 +256,7 @@ export default function ListingsPage() {
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
                       placeholder="$1000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     />
                   </div>
                 </div>
@@ -246,7 +287,7 @@ export default function ListingsPage() {
             ) : listings.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No listings found matching your criteria.</p>
-                <Link 
+                <Link
                   href="/marketplace/create-listing"
                   className="mt-4 inline-block bg-umass-maroon text-white px-6 py-2 rounded-md hover:bg-red-800"
                 >
@@ -255,66 +296,109 @@ export default function ListingsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
-                  <div key={listing.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {listing.title}
-                        </h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          listing.type === 'AUCTION' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
-                        }`}>
-                          {listing.type === 'AUCTION' ? 'Auction' : 'Direct Sale'}
-                        </span>
-                      </div>
-                      
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {listing.description}
-                      </p>
-                      
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-2xl font-bold text-umass-maroon">
-                          ${listing.price}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {listing.condition.replace('_', ' ')}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
-                        <span>{listing.category.replace('_', ' ')}</span>
-                        <span>by {listing.seller.name}</span>
-                      </div>
-                      
-                      {listing.seller.rating && (
-                        <div className="flex items-center mb-4">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-sm text-gray-600 ml-1">
-                            {listing.seller.rating.toFixed(1)} ({listing.seller.ratingCount} reviews)
+                {listings.map((listing) => {
+                  const firstImage = getFirstImage(listing.images)
+
+                  return (
+                    <div key={listing.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
+                      {/* Image Section */}
+                      <div className="relative h-48 bg-gray-100">
+                        {firstImage ? (
+                          <img
+                            src={firstImage}
+                            alt={listing.title}
+                            className="w-full h-full object-cover"
+                            onLoad={() => {
+                              console.log('Image loaded successfully:', firstImage)
+                            }}
+                            onError={(e) => {
+                              console.error('Image failed to load:', firstImage)
+                              // Fallback to placeholder if image fails to load
+                              e.currentTarget.style.display = 'none'
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : null}
+
+                        {/* Fallback placeholder */}
+                        <div className={`${firstImage ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200`}>
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">{getCategoryIcon(listing.category)}</div>
+                            <div className="text-sm text-gray-500 font-medium">
+                              {listing.category.replace('_', ' ')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Listing Type Badge */}
+                        <div className="absolute top-3 right-3">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full backdrop-blur-sm ${listing.type === 'AUCTION'
+                              ? 'bg-orange-100/90 text-orange-800'
+                              : 'bg-green-100/90 text-green-800'
+                            }`}>
+                            {listing.type === 'AUCTION' ? 'Auction' : 'Direct Sale'}
                           </span>
                         </div>
-                      )}
-                      
-                      <div className="flex space-x-2">
-                        <Link
-                          href={`/marketplace/listings/${listing.id}`}
-                          className="flex-1 bg-umass-maroon text-white text-center py-2 px-4 rounded-md hover:bg-red-800 transition-colors"
-                        >
-                          View Details
-                        </Link>
-                        {listing.seller.id !== user.id && (
+
+                        {/* Price Badge */}
+                        <div className="absolute bottom-3 left-3">
+                          <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-lg font-bold text-umass-maroon">
+                            ${listing.price}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="p-4">
+                        <div className="mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                            {listing.title}
+                          </h3>
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                            {listing.description}
+                          </p>
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm text-gray-500 mb-3">
+                          <span className="flex items-center">
+                            <span className="mr-1">{getCategoryIcon(listing.category)}</span>
+                            {listing.category.replace('_', ' ')}
+                          </span>
+                          <span className="bg-gray-100 px-2 py-1 rounded text-xs">
+                            {listing.condition.replace('_', ' ')}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                          <span>by {listing.seller.name}</span>
+                          {listing.seller.rating && (
+                            <div className="flex items-center">
+                              <span className="text-yellow-400 mr-1">★</span>
+                              <span>{listing.seller.rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex space-x-2">
                           <Link
-                            href={`/marketplace/messages?listing=${listing.id}&seller=${listing.seller.id}`}
-                            className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                            href={`/marketplace/listings/${listing.id}`}
+                            className="flex-1 bg-umass-maroon text-white text-center py-2 px-3 rounded-md hover:bg-red-800 transition-colors text-sm font-medium"
                           >
-                            Message
+                            View Details
                           </Link>
-                        )}
+                          {listing.seller.id !== user.id && (
+                            <Link
+                              href={`/marketplace/messages?listing=${listing.id}&seller=${listing.seller.id}`}
+                              className="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                            >
+                              💬
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
