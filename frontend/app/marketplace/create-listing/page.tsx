@@ -164,7 +164,7 @@ export default function CreateListing() {
                   required
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                   placeholder="Enter item title"
                 />
               </div>
@@ -180,7 +180,7 @@ export default function CreateListing() {
                   rows={4}
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                   placeholder="Describe your item in detail"
                 />
               </div>
@@ -195,7 +195,7 @@ export default function CreateListing() {
                   required
                   value={formData.type}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                 >
                   <option value="DIRECT_SALE">Direct Sale - Fixed Price</option>
                   <option value="AUCTION">Auction - Bidding</option>
@@ -223,7 +223,7 @@ export default function CreateListing() {
                       step="0.01"
                       value={formData.price}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                       placeholder="0.00"
                     />
                   </div>
@@ -242,7 +242,7 @@ export default function CreateListing() {
                         step="0.01"
                         value={formData.startingBid}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                         placeholder="0.00"
                       />
                     </div>
@@ -258,7 +258,7 @@ export default function CreateListing() {
                         step="0.01"
                         value={formData.bidIncrement}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                         placeholder="1.00"
                       />
                     </div>
@@ -275,7 +275,7 @@ export default function CreateListing() {
                     required
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                   >
                     <option value="">Select a category</option>
                     <option value="ELECTRONICS">Electronics</option>
@@ -301,7 +301,7 @@ export default function CreateListing() {
                     value={formData.auctionEndTime}
                     onChange={handleInputChange}
                     min={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     Set when the auction should end
@@ -319,7 +319,7 @@ export default function CreateListing() {
                   required
                   value={formData.condition}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                 >
                   <option value="">Select condition</option>
                   <option value="NEW">New</option>
@@ -341,7 +341,7 @@ export default function CreateListing() {
                   multiple
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-umass-maroon"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-umass-maroon"
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Upload up to 5 images of your item (JPG, PNG, GIF)
