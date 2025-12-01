@@ -513,10 +513,10 @@ export default function ListingDetail() {
                   {/* Contact Seller */}
                   {!isOwner && (
                     <Link
-                      href={`/marketplace/messages?listing=${listing.id}&seller=${listing.seller.id}`}
-                      className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-md text-center block hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      href={`/messages/${listing.id}/${listing.seller.id}`}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-center block hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      Message Seller
+                      💬 Message Seller
                     </Link>
                   )}
 

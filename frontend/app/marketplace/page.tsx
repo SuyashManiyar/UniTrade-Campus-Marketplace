@@ -40,6 +40,9 @@ export default function Marketplace() {
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
                 My Listings
               </Link>
+              <Link href="/messages" className="text-gray-700 hover:text-umass-maroon">
+                💬 Messages
+              </Link>
               {user.role === 'ADMIN' && (
                 <Link href="/admin" className="text-gray-700 hover:text-umass-maroon">
                   Admin Panel

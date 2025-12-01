@@ -9,26 +9,28 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.2",
+    "autoprefixer": "^10.4.16",
+    "axios": "^1.6.2",
+    "firebase": "^12.6.0",
+    "js-cookie": "^3.0.5",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.294.0",
     "next": "14.0.4",
+    "postcss": "^8.4.32",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "axios": "^1.6.2",
     "react-hook-form": "^7.48.2",
-    "react-query": "^3.39.3",
-    "@hookform/resolvers": "^3.3.2",
-    "zod": "^3.22.4",
-    "tailwindcss": "^3.3.6",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32",
-    "lucide-react": "^0.294.0",
     "react-hot-toast": "^2.4.1",
-    "js-cookie": "^3.0.5"
+    "react-query": "^3.39.3",
+    "tailwindcss": "^3.3.6",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.10.4",
     "@types/react": "^18.2.42",
     "@types/react-dom": "^18.2.17",
-    "@types/js-cookie": "^3.0.6",
     "eslint": "^8.55.0",
     "eslint-config-next": "14.0.4",
     "typescript": "^5.3.3"

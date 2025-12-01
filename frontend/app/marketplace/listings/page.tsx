@@ -388,8 +388,8 @@ export default function ListingsPage() {
                           </Link>
                           {listing.seller.id !== user.id && (
                             <Link
-                              href={`/marketplace/messages?listing=${listing.id}&seller=${listing.seller.id}`}
-                              className="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                              href={`/messages/${listing.id}/${listing.seller.id}`}
+                              className="bg-gray-300 text-white py-2 px-3 rounded-md hover:bg-gray-400 transition-colors text-sm"
                             >
                               💬
                             </Link>
