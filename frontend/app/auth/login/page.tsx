@@ -126,12 +126,6 @@ export default function Login() {
                 >
                   Didn't receive the code? Resend
                 </button>
-                
-                <div className="text-xs text-gray-500">
-                  <Link href="/dev/codes" target="_blank" className="underline hover:text-gray-700">
-                    🔧 Dev: Check verification codes
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
