@@ -2,50 +2,90 @@
 
 A secure web application that helps the UMass Amherst community buy and sell used goods by matching buyers and sellers. The platform enables users to trade second-hand items such as furniture, textbooks, fans, bikes, and electronics within a safe and structured campus environment.
 
+## 🎯 Project Status: **FULLY FUNCTIONAL** ✅
+
+The UMass Marketplace is complete and ready for use with all core features implemented:
+- ✅ User registration with UMass email verification
+- ✅ Beautiful 6-digit OTP input system
+- ✅ Secure JWT-based authentication
+- ✅ Complete marketplace with search and filters
+- ✅ Admin dashboard for content management
+- ✅ Real-time messaging system
+- ✅ Auction and direct sale support
+- ✅ User ratings and reviews
+- ✅ Gmail SMTP integration for email verification
+
 ## 🚀 Tech Stack
 
 ### Frontend
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **ESLint** - Code linting and formatting
+- **Tailwind CSS** - Utility-first CSS framework with UMass branding
+- **React Hook Form** - Form validation and management
+- **React Query** - Data fetching and caching
+- **Zod** - Schema validation
+- **React Hot Toast** - Beautiful notifications
+- **Custom OTP Component** - 6-digit verification input
 
 ### Backend
 - **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
+- **Express.js** - Web framework with security middleware
 - **TypeScript** - Type-safe JavaScript
-- **Prisma** - Modern ORM for Node.js and TypeScript
-- **PostgreSQL** - Relational database
+- **Prisma** - Modern ORM with SQLite database
+- **JWT** - Secure token-based authentication
+- **Nodemailer** - Email verification system
+- **Zod** - API validation
+- **Helmet** - Security headers
+
+### Database
+- **SQLite** - Lightweight database (perfect for development)
+- **Prisma Studio** - Database GUI and management
 
 ### Development Tools
 - **npm** - Package manager
 - **Concurrently** - Run multiple commands simultaneously
 - **Nodemon** - Auto-restart development server
-- **Prisma Studio** - Database GUI
+- **Custom dev tools** - Verification code viewer
 
 ## 📁 Project Structure
 
 ```
 UMass-Marketplace/
-├── frontend/                 # Next.js frontend application
-│   ├── src/
-│   │   ├── app/             # App Router pages
-│   │   ├── components/      # React components
-│   │   └── lib/             # Utility functions
-│   ├── public/              # Static assets
+├── frontend/                    # Next.js frontend application
+│   ├── app/                    # App Router pages
+│   │   ├── auth/              # Authentication pages (login/register)
+│   │   ├── marketplace/       # Main marketplace pages
+│   │   ├── admin/             # Admin dashboard
+│   │   └── dev/               # Development tools
+│   ├── components/            # Reusable React components
+│   │   └── OTPInput.tsx       # Custom 6-digit OTP input
+│   ├── lib/                   # Utility functions
+│   │   ├── api.ts             # Axios API client
+│   │   └── auth-context.tsx   # Authentication context
 │   └── package.json
-├── backend/                 # Express.js backend API
+├── backend/                     # Express.js backend API
 │   ├── src/
-│   │   ├── controllers/     # Route controllers
-│   │   ├── middleware/      # Custom middleware
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic
-│   │   ├── utils/           # Utility functions
-│   │   └── types/           # TypeScript type definitions
-│   ├── prisma/              # Database schema and migrations
+│   │   ├── middleware/        # Authentication middleware
+│   │   ├── routes/            # API routes
+│   │   │   ├── auth.ts        # Authentication endpoints
+│   │   │   ├── users.ts       # User management
+│   │   │   ├── listings.ts    # Marketplace listings
+│   │   │   ├── messages.ts    # In-app messaging
+│   │   │   ├── admin.ts       # Admin endpoints
+│   │   │   └── dev.ts         # Development tools
+│   │   └── utils/             # Utility functions
+│   │       ├── email.ts       # Email verification system
+│   │       └── validation.ts  # Zod schemas
+│   ├── prisma/                # Database schema and seed
+│   │   ├── schema.prisma      # Database models
+│   │   └── seed.ts            # Sample data generator
+│   ├── scripts/               # Utility scripts
+│   │   └── make-admin.js      # Admin user creation
 │   └── package.json
-├── database/                # Database-related files
-└── package.json             # Root package.json for workspace management
+├── database/                    # Database-related files
+├── FRIEND_SETUP.md             # Setup guide for collaborators
+├── QUICK_START.md              # Quick start instructions
+└── package.json                # Root workspace management
 ```
 
 ## 🛠️ Getting Started
@@ -82,9 +122,9 @@ UMass-Marketplace/
    ```
 
 4. **Configure your database and email**
-   - Update the `DATABASE_URL` in `backend/.env` with your PostgreSQL connection string
-   - Example: `postgresql://username:password@localhost:5432/umass_marketplace?schema=public`
-   - Configure email settings for verification codes (SMTP_HOST, SMTP_USER, SMTP_PASS)
+   - Database uses SQLite by default (no setup required)
+   - `DATABASE_URL="file:./dev.db"` in `backend/.env`
+   - Configure email settings for verification codes (optional - defaults to console logging)
 
 5. **Set up the database**
    ```bash
