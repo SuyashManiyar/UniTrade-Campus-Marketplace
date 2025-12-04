@@ -151,7 +151,6 @@ export default function ListingsPage() {
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
                 My Listings
               </Link>
-              
               <Link href="/messages" className="text-gray-700 hover:text-umass-maroon">
                 💬 Messages
               </Link>
