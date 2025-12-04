@@ -33,7 +33,7 @@ export default function Marketplace() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold text-umass-maroon">UMass Marketplace</h1>
+              <h1 className="text-xl font-bold text-umass-maroon">UniTrade</h1>
               <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium">
                 Browse Listings
               </Link>
