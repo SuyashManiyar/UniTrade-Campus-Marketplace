@@ -5,6 +5,7 @@ import listingRoutes from './listings';
 import messageRoutes from './messages';
 import adminRoutes from './admin';
 import devRoutes from './dev';
+import wishlistRoutes from './wishlist';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/listings', listingRoutes);
 router.use('/messages', messageRoutes);
 router.use('/admin', adminRoutes);
 router.use('/dev', devRoutes);
+router.use('/wishlist', wishlistRoutes);
 
 export default router;

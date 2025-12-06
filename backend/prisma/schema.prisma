@@ -68,6 +68,7 @@ model User {
   givenReviews    Review[]  @relation("ReviewGiver")
   receivedReviews Review[]  @relation("ReviewReceiver")
   reports         Report[]
+  wishlists       Wishlist[]
 
   @@map("users")
 }
@@ -99,6 +100,7 @@ model Listing {
   bids        Bid[]
   messages    Message[]
   reports     Report[]
+  wishlists   Wishlist[]
 
   @@map("listings")
 }
@@ -155,4 +157,16 @@ model Report {
   createdAt DateTime @default(now())
 
   @@map("reports")
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@map("wishlists")
 }
