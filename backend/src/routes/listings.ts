@@ -3,9 +3,128 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { listingSchema, bidSchema } from '../utils/validation';
 import { uploadImages, handleUploadError, getFileUrl } from '../middleware/upload';
+import { nlpService } from '../services/nlpService';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// NLP-enhanced search endpoint
+router.post('/nlp-search', async (req, res) => {
+  try {
+    const { query, page = '1', limit = '20' } = req.body;
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Query parameter is required' });
+    }
+
+    // Parse natural language query using NLP service
+    const parsedQuery = await nlpService.parseQuery(query);
+
+    // Input validation
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build where clause from parsed query
+    const where: any = {
+      status: 'ACTIVE'
+    };
+
+    // Apply extracted filters
+    if (parsedQuery.category) {
+      where.category = parsedQuery.category;
+    }
+
+    if (parsedQuery.condition) {
+      where.condition = parsedQuery.condition;
+    }
+
+    // Price range filter
+    if (parsedQuery.minPrice !== undefined || parsedQuery.maxPrice !== undefined) {
+      where.price = {};
+      if (parsedQuery.minPrice !== undefined) {
+        where.price.gte = parsedQuery.minPrice;
+      }
+      if (parsedQuery.maxPrice !== undefined) {
+        where.price.lte = parsedQuery.maxPrice;
+      }
+    }
+
+    // Keyword search in title and description (SQLite compatible)
+    if (parsedQuery.keywords.length > 0) {
+      where.OR = parsedQuery.keywords.flatMap(keyword => [
+        { title: { contains: keyword } },
+        { description: { contains: keyword } }
+      ]);
+    }
+
+    // Execute queries in parallel
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              rating: true,
+              ratingCount: true,
+              location: true
+            }
+          },
+          bids: {
+            orderBy: { amount: 'desc' },
+            take: 1,
+            include: {
+              bidder: {
+                select: { id: true, name: true }
+              }
+            }
+          },
+          _count: {
+            select: { bids: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.listing.count({ where })
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    res.json({
+      listings,
+      extractedFilters: {
+        keywords: parsedQuery.keywords,
+        category: parsedQuery.category,
+        condition: parsedQuery.condition,
+        minPrice: parsedQuery.minPrice,
+        maxPrice: parsedQuery.maxPrice,
+        confidence: parsedQuery.confidence
+      },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: totalPages,
+        hasNextPage,
+        hasPrevPage
+      },
+      fallbackUsed: parsedQuery.confidence === 0
+    });
+  } catch (error) {
+    console.error('NLP search error:', error);
+    res.status(500).json({
+      error: 'Failed to process search query',
+      message: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+    });
+  }
+});
 
 // Get all listings with advanced filters and search
 router.get('/', async (req, res) => {

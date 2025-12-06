@@ -38,6 +38,11 @@ export default function ListingsPage() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
+  
+  // NLP Search state
+  const [isNLPMode, setIsNLPMode] = useState(false)
+  const [naturalQuery, setNaturalQuery] = useState('')
+  const [extractedFilters, setExtractedFilters] = useState<any>(null)
 
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
@@ -169,17 +174,58 @@ export default function ListingsPage() {
     }
   }
 
+  const fetchNLPListings = async () => {
+    try {
+      setLoading(true)
+      const response = await api.post('/listings/nlp-search', {
+        query: naturalQuery
+      })
+      
+      setListings(response.data.listings)
+      setExtractedFilters(response.data.extractedFilters)
+      
+      // Update manual filters with extracted values
+      if (response.data.extractedFilters.category) {
+        setSelectedCategory(response.data.extractedFilters.category)
+      }
+      if (response.data.extractedFilters.condition) {
+        setSelectedCondition(response.data.extractedFilters.condition)
+      }
+      if (response.data.extractedFilters.minPrice) {
+        setMinPrice(response.data.extractedFilters.minPrice.toString())
+      }
+      if (response.data.extractedFilters.maxPrice) {
+        setMaxPrice(response.data.extractedFilters.maxPrice.toString())
+      }
+      
+      if (response.data.fallbackUsed) {
+        toast('Using standard search (NLP unavailable)', { icon: 'ℹ️' })
+      }
+    } catch (error) {
+      toast.error('Failed to fetch listings')
+      console.error('Error fetching NLP listings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchListings()
+    if (isNLPMode && naturalQuery) {
+      fetchNLPListings()
+    } else {
+      fetchListings()
+    }
   }
 
   const clearFilters = () => {
     setSearchTerm('')
+    setNaturalQuery('')
     setSelectedCategory('')
     setSelectedCondition('')
     setMinPrice('')
     setMaxPrice('')
+    setExtractedFilters(null)
     setTimeout(fetchListings, 100)
   }
 
@@ -245,20 +291,90 @@ export default function ListingsPage() {
 
             {/* Search and Filters */}
             <div className="bg-white p-6 rounded-lg shadow mb-6">
+              {/* NLP Mode Toggle */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsNLPMode(!isNLPMode)}
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                      isNLPMode
+                        ? 'bg-umass-maroon text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {isNLPMode ? '🤖 Smart Search' : '🔍 Manual Search'}
+                  </button>
+                  {isNLPMode && (
+                    <span className="text-sm text-gray-600 italic">
+                      Try: "laptop in good condition under $500"
+                    </span>
+                  )}
+                </div>
+                {extractedFilters && extractedFilters.confidence > 0 && (
+                  <span className="text-sm text-green-600 font-medium">
+                    ✓ Confidence: {(extractedFilters.confidence * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+
               <form onSubmit={handleSearch} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {isNLPMode ? (
+                  /* Natural Language Search */
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Search
+                      What are you looking for?
                     </label>
                     <input
                       type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search listings..."
+                      value={naturalQuery}
+                      onChange={(e) => setNaturalQuery(e.target.value)}
+                      placeholder="e.g., I want a powerbank in fair condition"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                     />
+                    {extractedFilters && (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                        <p className="text-sm font-medium text-blue-900 mb-1">Extracted Filters:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {extractedFilters.keywords && extractedFilters.keywords.length > 0 && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              Keywords: {extractedFilters.keywords.join(', ')}
+                            </span>
+                          )}
+                          {extractedFilters.category && (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                              Category: {extractedFilters.category}
+                            </span>
+                          )}
+                          {extractedFilters.condition && (
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                              Condition: {extractedFilters.condition}
+                            </span>
+                          )}
+                          {(extractedFilters.minPrice || extractedFilters.maxPrice) && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                              Price: ${extractedFilters.minPrice || 0} - ${extractedFilters.maxPrice || '∞'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
+                ) : (
+                  /* Manual Search */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Search
+                      </label>
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search listings..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                      />
+                    </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -322,6 +438,7 @@ export default function ListingsPage() {
                     />
                   </div>
                 </div>
+                )}
 
                 <div className="flex space-x-4">
                   <button
