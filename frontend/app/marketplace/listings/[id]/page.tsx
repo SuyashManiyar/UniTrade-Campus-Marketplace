@@ -234,16 +234,24 @@ export default function ListingDetail() {
 
           <div className="bg-white shadow rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50">
               <div className="flex justify-between items-start">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{listing.title}</h1>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(listing.status)}`}>
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-3">{listing.title}</h1>
+                  <div className="flex items-center flex-wrap gap-3">
+                    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(listing.status)}`}>
                       {listing.status}
                     </span>
-                    <span className="text-sm text-gray-500">
-                      {listing.category.replace('_', ' ')} • {listing.condition.replace('_', ' ')}
+                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
+                      {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
+                    </span>
+                    <span className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${
+                      listing.condition === 'NEW' ? 'bg-green-100 text-green-800' :
+                      listing.condition === 'LIKE_NEW' ? 'bg-emerald-100 text-emerald-800' :
+                      listing.condition === 'GOOD' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-orange-100 text-orange-800'
+                    }`}>
+                      ✨ {listing.condition.replace('_', ' ')}
                     </span>
                   </div>
                 </div>
@@ -390,9 +398,12 @@ export default function ListingDetail() {
                 </div>
 
                 {/* Description */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">{listing.description}</p>
+                <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                    <span className="mr-2">📝</span>
+                    Description
+                  </h3>
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{listing.description}</p>
                 </div>
 
                 {/* Auction Details */}
@@ -448,35 +459,50 @@ export default function ListingDetail() {
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Seller Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h3>
-                  <div className="space-y-2">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-5 border border-blue-200 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="mr-2">👤</span>
+                    Seller Information
+                  </h3>
+                  <div className="space-y-3">
                     <div>
-                      <span className="font-medium text-gray-900">{listing.seller.name}</span>
+                      <span className="font-semibold text-gray-900 text-lg">{listing.seller.name}</span>
                       {listing.seller.pronouns && (
-                        <span className="text-gray-600 ml-2">({listing.seller.pronouns})</span>
+                        <span className="text-gray-600 ml-2 text-sm">({listing.seller.pronouns})</span>
                       )}
                     </div>
-                    {listing.seller.major && (
-                      <div className="text-sm text-gray-600">
-                        Major: {listing.seller.major}
-                      </div>
-                    )}
-                    {listing.seller.location && (
-                      <div className="text-sm text-gray-600">
-                        Location: {listing.seller.location}
-                      </div>
-                    )}
                     {listing.seller.rating && (
-                      <div className="flex items-center text-sm">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-gray-600 ml-1">
-                          {listing.seller.rating.toFixed(1)} ({listing.seller.ratingCount} reviews)
+                      <div className="flex items-center bg-white rounded-md px-3 py-2 border border-yellow-200">
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className={`text-lg ${i < Math.round(listing.seller.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-700 ml-2 font-medium">
+                          {listing.seller.rating.toFixed(1)} ({listing.seller.ratingCount})
                         </span>
                       </div>
                     )}
-                    <div className="text-xs text-gray-500">
-                      Member since {new Date(listing.seller.createdAt).toLocaleDateString()}
+                    {listing.seller.major && (
+                      <div className="flex items-center text-sm text-gray-700">
+                        <span className="mr-2">🎓</span>
+                        <span className="font-medium">{listing.seller.major}</span>
+                      </div>
+                    )}
+                    {listing.seller.location && (
+                      <div className="flex items-center text-sm text-gray-700">
+                        <span className="mr-2">📍</span>
+                        <span className="font-medium">{listing.seller.location}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center text-xs text-gray-500 pt-2 border-t border-blue-200">
+                      <span className="mr-2">📅</span>
+                      Member since {new Date(listing.seller.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric'
+                      })}
                     </div>
                   </div>
                 </div>
@@ -514,10 +540,20 @@ export default function ListingDetail() {
                   {!isOwner && (
                     <Link
                       href={`/messages/${listing.id}/${listing.seller.id}`}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-center block hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg text-center block hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium shadow-md hover:shadow-lg transition-all"
                     >
                       💬 Message Seller
                     </Link>
+                  )}
+                  
+                  {/* Report Listing */}
+                  {!isOwner && (
+                    <button
+                      onClick={() => toast.error('Report feature coming soon!')}
+                      className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-center hover:bg-gray-200 focus:outline-none text-sm font-medium"
+                    >
+                      🚩 Report Listing
+                    </button>
                   )}
 
                   {/* Edit/Delete for Owner */}
@@ -534,26 +570,46 @@ export default function ListingDetail() {
                 </div>
 
                 {/* Listing Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Listing Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Posted:</span>
-                      <span className="text-gray-900">{formatDate(listing.createdAt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Updated:</span>
-                      <span className="text-gray-900">{formatDate(listing.updatedAt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
-                      <span className="text-gray-900">
-                        {listing.type === 'DIRECT_SALE' ? 'Direct Sale' : 'Auction'}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-5 border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="mr-2">📋</span>
+                    Listing Details
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-start justify-between py-2 border-b border-gray-200">
+                      <span className="text-gray-600 flex items-center">
+                        <span className="mr-2">📅</span>
+                        Posted
+                      </span>
+                      <span className="text-gray-900 font-medium text-right">
+                        {new Date(listing.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">ID:</span>
-                      <span className="text-gray-900 font-mono text-xs">{listing.id}</span>
+                    <div className="flex items-start justify-between py-2 border-b border-gray-200">
+                      <span className="text-gray-600 flex items-center">
+                        <span className="mr-2">🔄</span>
+                        Updated
+                      </span>
+                      <span className="text-gray-900 font-medium text-right">
+                        {new Date(listing.updatedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-start justify-between py-2">
+                      <span className="text-gray-600 flex items-center">
+                        <span className="mr-2">{listing.type === 'DIRECT_SALE' ? '💰' : '⚡'}</span>
+                        Type
+                      </span>
+                      <span className="text-gray-900 font-medium">
+                        {listing.type === 'DIRECT_SALE' ? 'Direct Sale' : 'Auction'}
+                      </span>
                     </div>
                   </div>
                 </div>
