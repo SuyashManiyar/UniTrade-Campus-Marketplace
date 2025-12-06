@@ -88,9 +88,26 @@ export default function ListingsPage() {
     }
 
     if (user) {
-      fetchListings()
+      // Read URL parameters on page load
+      const urlParams = new URLSearchParams(window.location.search)
+      const categoryParam = urlParams.get('category')
+      const conditionParam = urlParams.get('condition')
+      
+      if (categoryParam) {
+        setSelectedCategory(categoryParam)
+      }
+      if (conditionParam) {
+        setSelectedCondition(conditionParam)
+      }
     }
   }, [user, isLoading, router])
+
+  // Fetch listings when filters change or on initial load
+  useEffect(() => {
+    if (user) {
+      fetchListings()
+    }
+  }, [user, selectedCategory, selectedCondition, searchTerm, minPrice, maxPrice])
 
   const fetchListings = async () => {
     try {

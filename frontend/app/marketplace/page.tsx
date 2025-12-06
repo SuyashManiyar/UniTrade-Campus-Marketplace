@@ -2,18 +2,77 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { api } from '@/lib/api'
+
+interface Listing {
+  id: string
+  title: string
+  price?: number
+  category: string
+  condition: string
+  images?: string | null
+  type: string
+  currentBid?: number
+  startingBid?: number
+}
 
 export default function Marketplace() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
+  const [recentListings, setRecentListings] = useState<Listing[]>([])
+  const [stats, setStats] = useState({ total: 0, active: 0 })
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/auth/login')
+    } else if (user) {
+      fetchRecentListings()
     }
   }, [user, isLoading, router])
+
+  const fetchRecentListings = async () => {
+    try {
+      const response = await api.get('/listings?limit=6')
+      setRecentListings(response.data.listings || [])
+      setStats({
+        total: response.data.total || 0,
+        active: response.data.listings?.filter((l: Listing) => l).length || 0
+      })
+    } catch (error) {
+      console.error('Failed to fetch listings:', error)
+    }
+  }
+
+  const getCategoryIcon = (category: string): string => {
+    const icons: { [key: string]: string } = {
+      'ELECTRONICS': '📱',
+      'FURNITURE': '🪑',
+      'TEXTBOOKS': '📚',
+      'BIKES': '🚲',
+      'CLOTHING': '👕',
+      'OTHER': '📦'
+    }
+    return icons[category] || '📦'
+  }
+
+  const getFirstImage = (images: string | null | undefined): string | null => {
+    if (!images) return null
+    try {
+      const imageArray = JSON.parse(images)
+      if (Array.isArray(imageArray) && imageArray.length > 0) {
+        const imageUrl = imageArray[0]
+        if (imageUrl.startsWith('/uploads/')) {
+          const filename = imageUrl.replace('/uploads/', '')
+          const encodedFilename = encodeURIComponent(filename)
+          return `http://localhost:8080/uploads/${encodedFilename}`
+        }
+        return imageUrl
+      }
+    } catch {}
+    return null
+  }
 
   if (isLoading) {
     return (
@@ -27,74 +86,225 @@ export default function Marketplace() {
     return null
   }
 
+  const categories = [
+    { name: 'Electronics', icon: '💻', color: 'from-blue-500 to-blue-600', category: 'ELECTRONICS' },
+    { name: 'Furniture', icon: '🛋️', color: 'from-amber-500 to-amber-600', category: 'FURNITURE' },
+    { name: 'Textbooks', icon: '📖', color: 'from-green-500 to-green-600', category: 'TEXTBOOKS' },
+    { name: 'Bikes', icon: '🚴', color: 'from-purple-500 to-purple-600', category: 'BIKES' },
+    { name: 'Clothing', icon: '👔', color: 'from-pink-500 to-pink-600', category: 'CLOTHING' },
+    { name: 'Other', icon: '🏷️', color: 'from-gray-500 to-gray-600', category: 'OTHER' },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Navigation */}
+      <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold text-umass-maroon">UniTrade</h1>
-              <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium">
-                Browse Listings
+              <Link href="/marketplace" className="text-2xl font-bold text-umass-maroon">
+                UniTrade
               </Link>
-              <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
+              <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium transition-colors">
+                Browse
+              </Link>
+              <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon transition-colors">
                 My Listings
               </Link>
-              <Link href="/messages" className="text-gray-700 hover:text-umass-maroon">
-                💬 Messages
+              <Link href="/messages" className="text-gray-700 hover:text-umass-maroon transition-colors">
+                Messages
               </Link>
               {user.role === 'ADMIN' && (
-                <Link href="/admin" className="text-gray-700 hover:text-umass-maroon">
-                  Admin Panel
+                <Link href="/admin" className="text-gray-700 hover:text-umass-maroon transition-colors">
+                  Admin
                 </Link>
               )}
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.name}!</span>
+              <span className="text-gray-700 hidden md:block">{user.name}</span>
               <Link 
                 href="/marketplace/create-listing"
-                className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
+                className="bg-umass-maroon text-white px-5 py-2 rounded-lg hover:bg-red-800 font-medium shadow-md hover:shadow-lg transition-all"
               >
-                Post Item
+                Sell Item
               </Link>
               <button
                 onClick={logout}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                className="text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors"
               >
-                Logout
+                Sign Out
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Welcome to UMass Marketplace!
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Your secure platform for buying and selling within the UMass community.
-            </p>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Electronics</h3>
-                <p className="text-gray-600">Laptops, phones, and gadgets</p>
+      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="px-4 mb-12">
+          <div className="bg-gradient-to-r from-umass-maroon to-red-800 rounded-2xl shadow-xl p-8 md:p-12 text-white">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Welcome to UniTrade
+              </h1>
+              <p className="text-xl mb-8 text-red-50">
+                Buy, sell, and trade with fellow UMass students in a trusted community.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/marketplace/listings"
+                  className="bg-white text-umass-maroon px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                >
+                  Browse Listings
+                </Link>
+                <Link
+                  href="/marketplace/create-listing"
+                  className="bg-transparent text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors border-2 border-white"
+                >
+                  Sell an Item
+                </Link>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Furniture</h3>
-                <p className="text-gray-600">Desks, chairs, and dorm essentials</p>
+              
+              {/* Stats */}
+              <div className="mt-10 grid grid-cols-3 gap-6">
+                <div>
+                  <div className="text-3xl font-bold">{stats.total}</div>
+                  <div className="text-red-100 text-sm">Total Listings</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">{stats.active}</div>
+                  <div className="text-red-100 text-sm">Active Now</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">100%</div>
+                  <div className="text-red-100 text-sm">Verified Students</div>
+                </div>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Textbooks</h3>
-                <p className="text-gray-600">Course materials and study guides</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div className="px-4 mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Browse by Category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.category}
+                href={`/marketplace/listings?category=${cat.category}`}
+                className="group"
+              >
+                <div className={`bg-gradient-to-br ${cat.color} rounded-xl p-6 text-white shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer`}>
+                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
+                  <div className="font-semibold text-sm">{cat.name}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Listings */}
+        <div className="px-4 mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Recent Listings</h2>
+            <Link href="/marketplace/listings" className="text-umass-maroon hover:text-red-800 font-medium">
+              View All →
+            </Link>
+          </div>
+          
+          {recentListings.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recentListings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  href={`/marketplace/listings/${listing.id}`}
+                  className="group"
+                >
+                  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1">
+                    {/* Image */}
+                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                      {getFirstImage(listing.images) ? (
+                        <img
+                          src={getFirstImage(listing.images)!}
+                          alt={listing.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
+                        {listing.condition.replace('_', ' ')}
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
+                          {listing.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 flex items-center">
+                          {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
+                        </span>
+                        <span className="text-lg font-bold text-umass-maroon">
+                          {listing.type === 'DIRECT_SALE' 
+                            ? `$${listing.price}` 
+                            : `$${listing.currentBid || listing.startingBid}`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <div className="text-6xl mb-4">📦</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No listings yet</h3>
+              <p className="text-gray-600 mb-6">Be the first to post something!</p>
+              <Link
+                href="/marketplace/create-listing"
+                className="inline-block bg-umass-maroon text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors"
+              >
+                Create First Listing
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Features */}
+        <div className="px-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Transportation</h3>
-                <p className="text-gray-600">Bikes and campus mobility</p>
+              <h3 className="font-semibold text-gray-900 mb-2 text-lg">Secure & Trusted</h3>
+              <p className="text-gray-600 text-sm">Only verified UMass students can access UniTrade</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
               </div>
+              <h3 className="font-semibold text-gray-900 mb-2 text-lg">Direct Messaging</h3>
+              <p className="text-gray-600 text-sm">Chat directly with buyers and sellers in-app</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2 text-lg">Fast & Easy</h3>
+              <p className="text-gray-600 text-sm">List items quickly and start selling immediately</p>
             </div>
           </div>
         </div>

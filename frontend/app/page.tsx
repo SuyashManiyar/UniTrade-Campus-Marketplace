@@ -28,7 +28,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center text-white">
           <h1 className="text-6xl font-bold mb-6">
-            UMass Marketplace
+            UniTrade
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Buy and sell second-hand goods safely within the UMass Amherst community.
