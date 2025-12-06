@@ -37,6 +37,7 @@ export default function ListingsPage() {
   const [selectedCondition, setSelectedCondition] = useState('')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
+  const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
 
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
@@ -106,8 +107,46 @@ export default function ListingsPage() {
   useEffect(() => {
     if (user) {
       fetchListings()
+      fetchWishlist()
     }
   }, [user, selectedCategory, selectedCondition, searchTerm, minPrice, maxPrice])
+
+  const fetchWishlist = async () => {
+    try {
+      const response = await api.get('/wishlist')
+      const wishlistIds = new Set<string>(response.data.map((item: any) => item.listing.id as string))
+      setWishlistItems(wishlistIds)
+    } catch (error) {
+      console.error('Error fetching wishlist:', error)
+    }
+  }
+
+  const toggleWishlist = async (listingId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    try {
+      if (wishlistItems.has(listingId)) {
+        await api.delete(`/wishlist/${listingId}`)
+        setWishlistItems(prev => {
+          const newSet = new Set<string>(prev)
+          newSet.delete(listingId)
+          return newSet
+        })
+        toast.success('Removed from wishlist')
+      } else {
+        await api.post(`/wishlist/${listingId}`)
+        setWishlistItems(prev => {
+          const newSet = new Set<string>(prev)
+          newSet.add(listingId)
+          return newSet
+        })
+        toast.success('Added to wishlist')
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to update wishlist')
+    }
+  }
 
   const fetchListings = async () => {
     try {
@@ -168,8 +207,11 @@ export default function ListingsPage() {
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
                 My Listings
               </Link>
+              <Link href="/marketplace/wishlist" className="text-gray-700 hover:text-umass-maroon">
+                Wishlist
+              </Link>
               <Link href="/messages" className="text-gray-700 hover:text-umass-maroon">
-                💬 Messages
+                Messages
               </Link>
               {user.role === 'ADMIN' && (
                 <Link href="/admin" className="text-gray-700 hover:text-umass-maroon">
@@ -349,6 +391,22 @@ export default function ListingsPage() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Wishlist Heart Button */}
+                        <button
+                          onClick={(e) => toggleWishlist(listing.id, e)}
+                          className="absolute top-3 left-3 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
+                          title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                          <svg 
+                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
+                            fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </button>
 
                         {/* Listing Type Badge */}
                         <div className="absolute top-3 right-3">

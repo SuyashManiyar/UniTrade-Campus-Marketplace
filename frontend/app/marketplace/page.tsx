@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import toast from 'react-hot-toast'
 
 interface Listing {
   id: string
@@ -23,12 +24,14 @@ export default function Marketplace() {
   const router = useRouter()
   const [recentListings, setRecentListings] = useState<Listing[]>([])
   const [stats, setStats] = useState({ total: 0, active: 0 })
+  const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/auth/login')
     } else if (user) {
       fetchRecentListings()
+      fetchWishlist()
     }
   }, [user, isLoading, router])
 
@@ -42,6 +45,43 @@ export default function Marketplace() {
       })
     } catch (error) {
       console.error('Failed to fetch listings:', error)
+    }
+  }
+
+  const fetchWishlist = async () => {
+    try {
+      const response = await api.get('/wishlist')
+      const wishlistIds = new Set<string>(response.data.map((item: any) => item.listing.id as string))
+      setWishlistItems(wishlistIds)
+    } catch (error) {
+      console.error('Error fetching wishlist:', error)
+    }
+  }
+
+  const toggleWishlist = async (listingId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    try {
+      if (wishlistItems.has(listingId)) {
+        await api.delete(`/wishlist/${listingId}`)
+        setWishlistItems(prev => {
+          const newSet = new Set<string>(prev)
+          newSet.delete(listingId)
+          return newSet
+        })
+        toast.success('Removed from wishlist')
+      } else {
+        await api.post(`/wishlist/${listingId}`)
+        setWishlistItems(prev => {
+          const newSet = new Set<string>(prev)
+          newSet.add(listingId)
+          return newSet
+        })
+        toast.success('Added to wishlist')
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to update wishlist')
     }
   }
 
@@ -110,6 +150,9 @@ export default function Marketplace() {
               </Link>
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon transition-colors">
                 My Listings
+              </Link>
+              <Link href="/marketplace/wishlist" className="text-gray-700 hover:text-umass-maroon transition-colors">
+                Wishlist
               </Link>
               <Link href="/messages" className="text-gray-700 hover:text-umass-maroon transition-colors">
                 Messages
@@ -234,6 +277,23 @@ export default function Marketplace() {
                           <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
                         </div>
                       )}
+                      
+                      {/* Wishlist Heart Button */}
+                      <button
+                        onClick={(e) => toggleWishlist(listing.id, e)}
+                        className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
+                        title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                      >
+                        <svg 
+                          className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
+                          fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </button>
+                      
                       <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
                         {listing.condition.replace('_', ' ')}
                       </div>
