@@ -63,6 +63,9 @@ export default function MessagesPage() {
         console.log('Received conversations:', convs);
         console.log('Starting to fetch user and listing details...');
         
+        // Show loading state while fetching
+        setLoading(true);
+        
         // Fetch user names and listing titles for conversations
         const conversationsWithDetails = await Promise.all(
           convs.map(async (conv) => {
@@ -75,6 +78,7 @@ export default function MessagesPage() {
               console.log('Fetching user details for:', conv.otherUserId);
               const response = await fetch(`${API_URL}/users/${conv.otherUserId}`, {
                 headers: { Authorization: `Bearer ${token}` },
+                cache: 'no-store', // Prevent caching issues
               });
               
               if (response.ok) {
@@ -83,17 +87,11 @@ export default function MessagesPage() {
                 updatedConv.otherUserName = userData.name || 'Unknown User';
               } else {
                 console.error('Failed to fetch user:', response.status);
-                // Keep the original name if fetch fails
-                if (!updatedConv.otherUserName || updatedConv.otherUserName === 'User') {
-                  updatedConv.otherUserName = 'Unknown User';
-                }
+                updatedConv.otherUserName = 'Unknown User';
               }
             } catch (err) {
               console.error('Error fetching user name:', err);
-              // Keep the original name if fetch fails
-              if (!updatedConv.otherUserName || updatedConv.otherUserName === 'User') {
-                updatedConv.otherUserName = 'Unknown User';
-              }
+              updatedConv.otherUserName = 'Unknown User';
             }
             
             // Always fetch listing details
@@ -101,6 +99,7 @@ export default function MessagesPage() {
               console.log('Fetching listing details for:', conv.listingId);
               const response = await fetch(`${API_URL}/listings/${conv.listingId}`, {
                 headers: { Authorization: `Bearer ${token}` },
+                cache: 'no-store', // Prevent caching issues
               });
               
               if (response.ok) {
@@ -120,15 +119,8 @@ export default function MessagesPage() {
         
         console.log('Finished fetching details. Final conversations:', conversationsWithDetails);
         
-        // Filter out any conversations that still have "User" as the name after fetching
-        const validConversations = conversationsWithDetails.filter(
-          conv => conv.otherUserName && conv.otherUserName !== 'User' && conv.otherUserName !== 'Unknown User'
-        );
-        
-        console.log('Valid conversations after filtering:', validConversations);
-        
-        // Force update by creating new array reference
-        setConversations([...validConversations]);
+        // Update state with fetched data
+        setConversations(conversationsWithDetails);
         setLoading(false);
       });
 

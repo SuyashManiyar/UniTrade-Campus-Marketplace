@@ -82,8 +82,10 @@ export default function ConversationList({
           conversations.map((conv) => {
             const conversationKey = `${conv.listingId}-${conv.otherUserId}`;
             const isActive = conversationKey === currentConversationKey;
-            const displayName = !conv.otherUserName || conv.otherUserName === 'Unknown User' || conv.otherUserName === 'User' 
-              ? 'User' 
+            const displayName = !conv.otherUserName || conv.otherUserName === 'Unknown User' 
+              ? 'Unknown User' 
+              : conv.otherUserName === 'User'
+              ? 'Loading...'
               : conv.otherUserName;
 
             return (
