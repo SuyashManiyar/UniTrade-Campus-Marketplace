@@ -15,7 +15,7 @@ import {
 } from '@/lib/messaging';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 import axios from 'axios';
 
 interface DecodedToken {
@@ -179,7 +179,8 @@ export default function ConversationPage() {
     );
   }
 
-  const conversationKey = `${listingId}-${otherUserId}`;
+  // const conversationKey = `${listingId}-${otherUserId}`;
+  const conversationKey = '0';
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -194,17 +195,31 @@ export default function ConversationPage() {
       {/* Message Area */}
       <div className="flex-1 flex flex-col bg-white">
         {/* Header */}
-        <div className="border-b p-4 bg-white flex items-center gap-4">
+        <div className="border-b px-4 py-3 bg-white flex items-center gap-3 shadow-sm">
           <button
             onClick={() => router.push('/messages')}
-            className="md:hidden text-gray-600 hover:text-gray-900"
+            className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg -ml-2"
+            title="Back to conversations"
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={20} />
           </button>
-          <div className="flex-1">
-            <h2 className="font-bold text-lg">{otherUserName || 'Loading...'}</h2>
+          
+          <div className="h-8 w-px bg-gray-300"></div>
+          
+          {/* User Avatar */}
+          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 shadow-sm">
+            {otherUserName ? otherUserName[0].toUpperCase() : '?'}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold text-base text-gray-900 truncate leading-tight">
+              {otherUserName || 'Loading...'}
+            </h2>
             {listingTitle && (
-              <p className="text-sm text-gray-500">Re: {listingTitle}</p>
+              <p className="text-xs text-gray-500 truncate flex items-center gap-1 mt-0.5">
+                <Package size={12} />
+                <span>{listingTitle}</span>
+              </p>
             )}
           </div>
         </div>

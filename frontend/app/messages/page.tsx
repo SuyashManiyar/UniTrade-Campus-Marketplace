@@ -183,24 +183,25 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/marketplace" className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft size={24} />
-              </Link>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <MessageCircle size={24} />
-                Messages
-              </h1>
-            </div>
+      <nav className="bg-white shadow-sm">
+        <div className="px-8">
+          <div className="flex items-center h-16 gap-3">
+            <Link 
+              href="/marketplace" 
+              className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg -ml-2"
+              title="Back to Marketplace"
+            >
+              <ArrowLeft size={20} />
+            </Link>
+            <div className="h-6 w-px bg-gray-300"></div>
+            <MessageCircle size={22} className="text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
           </div>
         </div>
       </nav>
 
       <div className="flex h-[calc(100vh-4rem)]">
-        <ConversationList conversations={conversations} />
+        <ConversationList conversations={conversations} showHeader={false} />
         <div className="flex-1 flex items-center justify-center text-gray-500">
           <div className="text-center p-8">
             <MessageCircle size={64} className="mx-auto mb-4 opacity-50" />
