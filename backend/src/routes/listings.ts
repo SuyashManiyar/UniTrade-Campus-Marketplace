@@ -147,6 +147,7 @@ router.get('/', async (req, res) => {
       search,
       category,
       condition,
+      status,
       minPrice,
       maxPrice,
       type,
@@ -161,9 +162,16 @@ router.get('/', async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     // Build where clause
-    const where: any = {
-      status: 'ACTIVE'
-    };
+    const where: any = {};
+
+    // Status filter - if not specified, show all statuses
+    if (status && typeof status === 'string') {
+      const validStatuses = ['ACTIVE', 'SOLD', 'EXPIRED', 'CANCELLED'];
+      if (validStatuses.includes(status.toUpperCase())) {
+        where.status = status.toUpperCase();
+      }
+    }
+    // If no status specified, don't filter by status (show all)
 
     // Simple search functionality (SQLite compatible)
     if (search && typeof search === 'string' && search.trim().length > 0) {
@@ -301,6 +309,7 @@ router.get('/', async (req, res) => {
         search: search || null,
         category: category || null,
         condition: condition || null,
+        status: status || 'ALL',
         minPrice: minPrice ? parseFloat(minPrice as string) : null,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : null,
         type: type || null,
@@ -479,6 +488,57 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     } else {
       res.status(500).json({ error: 'Failed to update listing' });
     }
+  }
+});
+
+// Update listing status (seller only - for their own listings)
+router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const { status } = req.body;
+
+    // Validate status
+    if (!['ACTIVE', 'SOLD', 'CANCELLED'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Allowed: ACTIVE, SOLD, CANCELLED' });
+    }
+
+    // Check if listing exists and belongs to user
+    const existingListing = await prisma.listing.findUnique({
+      where: { id }
+    });
+
+    if (!existingListing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    if (existingListing.sellerId !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this listing' });
+    }
+
+    // Update the listing status
+    const listing = await prisma.listing.update({
+      where: { id },
+      data: { status },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            rating: true,
+            ratingCount: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: `Listing marked as ${status}`,
+      listing
+    });
+  } catch (error) {
+    console.error('Update listing status error:', error);
+    res.status(500).json({ error: 'Failed to update listing status' });
   }
 });
 

@@ -42,6 +42,7 @@ export default function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedCondition, setSelectedCondition] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
@@ -50,6 +51,7 @@ export default function ListingsPage() {
 
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
+  const statuses = ['ALL', 'ACTIVE', 'SOLD', 'EXPIRED', 'CANCELLED']
 
   // Helper function to get the first image from images JSON
   const getFirstImage = (images: string | null | undefined): string | null => {
@@ -147,7 +149,7 @@ export default function ListingsPage() {
       fetchListings()
       fetchWishlist()
     }
-  }, [user, selectedCategory, selectedCondition, minPrice, maxPrice])
+  }, [user, selectedCategory, selectedCondition, selectedStatus, minPrice, maxPrice])
 
   const fetchWishlist = async () => {
     try {
@@ -187,11 +189,15 @@ export default function ListingsPage() {
   }
 
   const fetchListings = async () => {
-    if (!searchQuery && !selectedCategory && !selectedCondition && !minPrice && !maxPrice) {
-      // If no search query and no filters, fetch all listings
+    if (!searchQuery && !selectedCategory && !selectedCondition && !minPrice && !maxPrice && (selectedStatus === 'ACTIVE' || selectedStatus === 'ALL')) {
+      // If no search query and no filters (except status), fetch listings
       try {
         setLoading(true)
-        const response = await api.get('/listings')
+        const params = new URLSearchParams()
+        if (selectedStatus && selectedStatus !== 'ALL') {
+          params.append('status', selectedStatus)
+        }
+        const response = await api.get(`/listings?${params.toString()}`)
         setListings(response.data.listings)
         setExtractedFilters(null)
         setNlpFailed(false)
@@ -216,6 +222,7 @@ export default function ListingsPage() {
         const manualFilters: any = {}
         if (selectedCategory) manualFilters.category = selectedCategory
         if (selectedCondition) manualFilters.condition = selectedCondition
+        if (selectedStatus) manualFilters.status = selectedStatus
         if (minPrice) manualFilters.minPrice = parseFloat(minPrice)
         if (maxPrice) manualFilters.maxPrice = parseFloat(maxPrice)
 
@@ -225,6 +232,7 @@ export default function ListingsPage() {
           filteredListings = filteredListings.filter((listing: Listing) => {
             if (manualFilters.category && listing.category !== manualFilters.category) return false
             if (manualFilters.condition && listing.condition !== manualFilters.condition) return false
+            if (manualFilters.status && listing.status !== manualFilters.status) return false
             if (manualFilters.minPrice && listing.price < manualFilters.minPrice) return false
             if (manualFilters.maxPrice && listing.price > manualFilters.maxPrice) return false
             return true
@@ -255,6 +263,7 @@ export default function ListingsPage() {
 
         if (selectedCategory) params.append('category', selectedCategory)
         if (selectedCondition) params.append('condition', selectedCondition)
+        if (selectedStatus && selectedStatus !== 'ALL') params.append('status', selectedStatus)
         if (minPrice) params.append('minPrice', minPrice)
         if (maxPrice) params.append('maxPrice', maxPrice)
 
@@ -280,6 +289,7 @@ export default function ListingsPage() {
     setSearchQuery('')
     setSelectedCategory('')
     setSelectedCondition('')
+    setSelectedStatus('ALL')
     setMinPrice('')
     setMaxPrice('')
     setExtractedFilters(null)
@@ -399,7 +409,24 @@ export default function ListingsPage() {
                 </div>
 
                 {/* Manual Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                    >
+                      {statuses.map(status => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -553,14 +580,22 @@ export default function ListingsPage() {
                           </svg>
                         </button>
 
-                        {/* Listing Type Badge */}
-                        <div className="absolute top-3 right-3">
+                        {/* Listing Type and Status Badges */}
+                        <div className="absolute top-3 right-3 flex flex-col gap-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full backdrop-blur-sm ${listing.type === 'AUCTION'
                             ? 'bg-orange-100/90 text-orange-800'
                             : 'bg-green-100/90 text-green-800'
                             }`}>
                             {listing.type === 'AUCTION' ? 'Auction' : 'Direct Sale'}
                           </span>
+                          {listing.status !== 'ACTIVE' && (
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full backdrop-blur-sm ${listing.status === 'SOLD' ? 'bg-blue-100/90 text-blue-800' :
+                              listing.status === 'CANCELLED' ? 'bg-red-100/90 text-red-800' :
+                                'bg-gray-100/90 text-gray-800'
+                              }`}>
+                              {listing.status}
+                            </span>
+                          )}
                         </div>
 
                         {/* Price Badge */}

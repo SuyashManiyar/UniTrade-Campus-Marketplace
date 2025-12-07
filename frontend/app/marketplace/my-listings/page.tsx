@@ -29,10 +29,11 @@ interface Listing {
 }
 
 // ListingCard component to avoid code duplication
-function ListingCard({ listing, firstImage, onDelete }: { 
-  listing: Listing, 
-  firstImage: string | null, 
-  onDelete: (id: string) => void 
+function ListingCard({ listing, firstImage, onDelete, onMarkAsSold }: {
+  listing: Listing,
+  firstImage: string | null,
+  onDelete: (id: string) => void,
+  onMarkAsSold: (id: string) => void
 }) {
   const getCategoryIcon = (category: string): string => {
     const icons: { [key: string]: string } = {
@@ -152,28 +153,38 @@ function ListingCard({ listing, firstImage, onDelete }: {
             Created: {new Date(listing.createdAt).toLocaleDateString()}
           </div>
 
-          <div className="flex space-x-2">
-            <Link
-              href={`/marketplace/listings/${listing.id}`}
-              className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
-            >
-              View
-            </Link>
-            {listing.status === 'ACTIVE' && (
-              <>
+          <div className="space-y-2">
+            <div className="flex space-x-2">
+              <Link
+                href={`/marketplace/listings/${listing.id}`}
+                className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm text-center hover:bg-gray-200"
+              >
+                View
+              </Link>
+              {listing.status === 'ACTIVE' && (
                 <Link
                   href={`/marketplace/edit-listing/${listing.id}`}
                   className="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm text-center hover:bg-blue-200"
                 >
                   Edit
                 </Link>
+              )}
+            </div>
+            {listing.status === 'ACTIVE' && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => onMarkAsSold(listing.id)}
+                  className="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded text-sm hover:bg-green-200 font-medium"
+                >
+                  ✓ Mark as Sold
+                </button>
                 <button
                   onClick={() => onDelete(listing.id)}
                   className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200"
                 >
-                  Delete
+                  Cancel
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -242,8 +253,39 @@ export default function MyListings() {
     }
   }
 
+  const handleMarkAsSold = async (listingId: string) => {
+    if (!confirm('Mark this item as SOLD? This will notify buyers that the item is no longer available.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'SOLD' }),
+      })
+
+      if (response.ok) {
+        toast.success('Listing marked as SOLD!')
+        // Update the listing in the state
+        setListings(listings.map(listing =>
+          listing.id === listingId
+            ? { ...listing, status: 'SOLD' }
+            : listing
+        ))
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to mark as sold')
+      }
+    } catch (error) {
+      toast.error('An error occurred while updating the listing')
+    }
+  }
+
   const handleDeleteListing = async (listingId: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) {
+    if (!confirm('Are you sure you want to cancel this listing?')) {
       return
     }
 
@@ -253,13 +295,18 @@ export default function MyListings() {
       })
 
       if (response.ok) {
-        toast.success('Listing deleted successfully')
-        setListings(listings.filter(listing => listing.id !== listingId))
+        toast.success('Listing cancelled successfully')
+        // Update the listing status instead of removing it
+        setListings(listings.map(listing =>
+          listing.id === listingId
+            ? { ...listing, status: 'CANCELLED' }
+            : listing
+        ))
       } else {
-        toast.error('Failed to delete listing')
+        toast.error('Failed to cancel listing')
       }
     } catch (error) {
-      toast.error('An error occurred while deleting the listing')
+      toast.error('An error occurred while cancelling the listing')
     }
   }
 
@@ -291,7 +338,7 @@ export default function MyListings() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
-              <Link 
+              <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
               >
@@ -334,7 +381,13 @@ export default function MyListings() {
                       {activeListings.map((listing) => {
                         const firstImage = getFirstImage(listing.images)
                         return (
-                          <ListingCard key={listing.id} listing={listing} firstImage={firstImage} onDelete={handleDeleteListing} />
+                          <ListingCard
+                            key={listing.id}
+                            listing={listing}
+                            firstImage={firstImage}
+                            onDelete={handleDeleteListing}
+                            onMarkAsSold={handleMarkAsSold}
+                          />
                         )
                       })}
                     </div>
@@ -354,7 +407,13 @@ export default function MyListings() {
                       {cancelledListings.map((listing) => {
                         const firstImage = getFirstImage(listing.images)
                         return (
-                          <ListingCard key={listing.id} listing={listing} firstImage={firstImage} onDelete={handleDeleteListing} />
+                          <ListingCard
+                            key={listing.id}
+                            listing={listing}
+                            firstImage={firstImage}
+                            onDelete={handleDeleteListing}
+                            onMarkAsSold={handleMarkAsSold}
+                          />
                         )
                       })}
                     </div>
