@@ -18,6 +18,9 @@ interface Listing {
   status: string
   createdAt: string
   images?: string
+  currentBid?: number
+  startingBid?: number
+  bidIncrement?: number
   seller: {
     id: string
     name: string
@@ -25,6 +28,20 @@ interface Listing {
     ratingCount: number
   }
   bids: any[]
+  _count?: {
+    bids: number
+  }
+}
+
+interface LeaderboardEntry {
+  bidder: {
+    id: string
+    name: string
+    rating: number | null
+    ratingCount: number
+  }
+  totalBidAmount: number
+  totalBids: number
 }
 
 export default function ListingsPage() {
@@ -38,6 +55,8 @@ export default function ListingsPage() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
@@ -108,8 +127,18 @@ export default function ListingsPage() {
     if (user) {
       fetchListings()
       fetchWishlist()
+      fetchLeaderboard()
     }
   }, [user, selectedCategory, selectedCondition, searchTerm, minPrice, maxPrice])
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await api.get('/listings/leaderboard/top-bidders')
+      setLeaderboard(response.data)
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+    }
+  }
 
   const fetchWishlist = async () => {
     try {
@@ -341,6 +370,68 @@ export default function ListingsPage() {
               </form>
             </div>
 
+            {/* Leaderboard Toggle Button */}
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={() => setShowLeaderboard(!showLeaderboard)}
+                className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-lg hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md flex items-center space-x-2"
+              >
+                <span>🏆</span>
+                <span>{showLeaderboard ? 'Hide' : 'Show'} Top Bidders</span>
+              </button>
+            </div>
+
+            {/* Leaderboard */}
+            {showLeaderboard && leaderboard.length > 0 && (
+              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 mb-6 border-2 border-yellow-300 shadow-lg">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                  <span className="text-3xl mr-2">🏆</span>
+                  Top 10 Bidding Leaderboard
+                </h3>
+                <div className="space-y-2">
+                  {leaderboard.map((entry, index) => (
+                    <div
+                      key={entry.bidder.id}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
+                        index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
+                        index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
+                        'bg-white border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className={`text-2xl font-bold ${
+                          index === 0 ? 'text-yellow-600' :
+                          index === 1 ? 'text-gray-600' :
+                          index === 2 ? 'text-orange-600' :
+                          'text-gray-500'
+                        }`}>
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                        </span>
+                        <div>
+                          <div className="font-semibold text-gray-900">{entry.bidder.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
+                            {entry.bidder.rating && (
+                              <span className="ml-2">
+                                ⭐ {entry.bidder.rating.toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-green-600">
+                          ${entry.totalBidAmount.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-500">Total Bid Amount</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Listings Grid */}
             {loading ? (
               <div className="flex justify-center py-12">
@@ -360,9 +451,23 @@ export default function ListingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {listings.map((listing) => {
                   const firstImage = getFirstImage(listing.images)
+                  const hasBids = listing._count && listing._count.bids > 0
 
                   return (
-                    <div key={listing.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
+                    <div 
+                      key={listing.id} 
+                      className={`bg-white rounded-lg shadow hover:shadow-lg transition-all overflow-hidden ${
+                        hasBids ? 'animate-shine-border' : ''
+                      }`}
+                      style={hasBids ? {
+                        boxShadow: '0 0 20px rgba(251, 191, 36, 0.5)',
+                        border: '2px solid transparent',
+                        backgroundImage: 'linear-gradient(white, white), linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24)',
+                        backgroundOrigin: 'border-box',
+                        backgroundClip: 'padding-box, border-box',
+                        animation: 'shine 3s linear infinite'
+                      } : {}}
+                    >
                       {/* Image Section */}
                       <div className="relative h-48 bg-gray-100">
                         {firstImage ? (
@@ -457,12 +562,32 @@ export default function ListingsPage() {
                           )}
                         </div>
 
+                        {/* Bid Info for Auctions */}
+                        {listing.type === 'AUCTION' && (
+                          <div className="mb-3 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">
+                                {listing.currentBid ? 'Current Bid' : 'Starting Bid'}
+                              </span>
+                              <span className="font-bold text-green-600">
+                                ${listing.currentBid || listing.startingBid}
+                              </span>
+                            </div>
+                            {listing._count && listing._count.bids > 0 && (
+                              <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                <span className="mr-1">🔥</span>
+                                {listing._count.bids} bid{listing._count.bids !== 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex space-x-2">
                           <Link
                             href={`/marketplace/listings/${listing.id}`}
                             className="flex-1 bg-umass-maroon text-white text-center py-2 px-3 rounded-md hover:bg-red-800 transition-colors text-sm font-medium"
                           >
-                            View Details
+                            {listing.type === 'AUCTION' ? 'Place Bid' : 'View Details'}
                           </Link>
                           {listing.seller.id !== user.id && (
                             <Link

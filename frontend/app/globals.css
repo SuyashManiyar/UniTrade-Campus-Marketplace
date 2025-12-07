@@ -31,3 +31,21 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Shining border animation for items with active bids */
+@keyframes shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-shine-border {
+  background-size: 200% 200%;
+  animation: shine 3s ease-in-out infinite;
+}

@@ -487,4 +487,51 @@ router.get('/user/my-listings', authenticateToken, async (req: AuthRequest, res)
   }
 });
 
+// Get top 10 bidding leaderboard
+router.get('/leaderboard/top-bidders', async (req, res) => {
+  try {
+    const topBidders = await prisma.bid.groupBy({
+      by: ['bidderId'],
+      _sum: {
+        amount: true
+      },
+      _count: {
+        id: true
+      },
+      orderBy: {
+        _sum: {
+          amount: 'desc'
+        }
+      },
+      take: 10
+    });
+
+    // Get bidder details
+    const leaderboard = await Promise.all(
+      topBidders.map(async (bidder) => {
+        const user = await prisma.user.findUnique({
+          where: { id: bidder.bidderId },
+          select: {
+            id: true,
+            name: true,
+            rating: true,
+            ratingCount: true
+          }
+        });
+
+        return {
+          bidder: user,
+          totalBidAmount: bidder._sum.amount || 0,
+          totalBids: bidder._count.id
+        };
+      })
+    );
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Get leaderboard error:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
 export default router;

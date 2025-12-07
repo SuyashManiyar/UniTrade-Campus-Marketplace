@@ -1,3 +1,4 @@
+cd backend
 # Wishlist Feature Update - Setup Instructions
 
 ## What's New?

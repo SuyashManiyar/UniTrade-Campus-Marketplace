@@ -17,6 +17,20 @@ interface Listing {
   type: string
   currentBid?: number
   startingBid?: number
+  _count?: {
+    bids: number
+  }
+}
+
+interface LeaderboardEntry {
+  bidder: {
+    id: string
+    name: string
+    rating: number | null
+    ratingCount: number
+  }
+  totalBidAmount: number
+  totalBids: number
 }
 
 export default function Marketplace() {
@@ -25,6 +39,8 @@ export default function Marketplace() {
   const [recentListings, setRecentListings] = useState<Listing[]>([])
   const [stats, setStats] = useState({ total: 0, active: 0 })
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -32,8 +48,18 @@ export default function Marketplace() {
     } else if (user) {
       fetchRecentListings()
       fetchWishlist()
+      fetchLeaderboard()
     }
   }, [user, isLoading, router])
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await api.get('/listings/leaderboard/top-bidders')
+      setLeaderboard(response.data)
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+    }
+  }
 
   const fetchRecentListings = async () => {
     try {
@@ -61,7 +87,7 @@ export default function Marketplace() {
   const toggleWishlist = async (listingId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     try {
       if (wishlistItems.has(listingId)) {
         await api.delete(`/wishlist/${listingId}`)
@@ -110,7 +136,7 @@ export default function Marketplace() {
         }
         return imageUrl
       }
-    } catch {}
+    } catch { }
     return null
   }
 
@@ -165,7 +191,7 @@ export default function Marketplace() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700 hidden md:block">{user.name}</span>
-              <Link 
+              <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-5 py-2 rounded-lg hover:bg-red-800 font-medium shadow-md hover:shadow-lg transition-all"
               >
@@ -207,7 +233,7 @@ export default function Marketplace() {
                   Sell an Item
                 </Link>
               </div>
-              
+
               {/* Stats */}
               <div className="mt-10 grid grid-cols-3 gap-6">
                 <div>
@@ -246,6 +272,85 @@ export default function Marketplace() {
           </div>
         </div>
 
+        {/* Leaderboard Section */}
+        {leaderboard.length > 0 && (
+          <div className="px-4 mb-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                <span className="text-3xl mr-2">🏆</span>
+                Top Bidders
+              </h2>
+              <button
+                onClick={() => setShowLeaderboard(!showLeaderboard)}
+                className="text-umass-maroon hover:text-red-800 font-medium"
+              >
+                {showLeaderboard ? 'Hide' : 'Show All'} →
+              </button>
+            </div>
+
+            {showLeaderboard ? (
+              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-300 shadow-lg">
+                <div className="grid md:grid-cols-2 gap-3">
+                  {leaderboard.map((entry, index) => (
+                    <div
+                      key={entry.bidder.id}
+                      className={`flex items-center justify-between p-3 rounded-lg ${index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
+                        index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
+                          index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
+                            'bg-white border border-gray-200'
+                        }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className={`text-xl font-bold ${index === 0 ? 'text-yellow-600' :
+                          index === 1 ? 'text-gray-600' :
+                            index === 2 ? 'text-orange-600' :
+                              'text-gray-500'
+                          }`}>
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                        </span>
+                        <div>
+                          <div className="font-semibold text-gray-900">{entry.bidder.name}</div>
+                          <div className="text-xs text-gray-600">
+                            {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">
+                          ${entry.totalBidAmount.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-4">
+                {leaderboard.slice(0, 3).map((entry, index) => (
+                  <div
+                    key={entry.bidder.id}
+                    className={`p-4 rounded-xl shadow-md ${index === 0 ? 'bg-gradient-to-br from-yellow-100 to-yellow-200' :
+                      index === 1 ? 'bg-gradient-to-br from-gray-100 to-gray-200' :
+                        'bg-gradient-to-br from-orange-100 to-orange-200'
+                      }`}
+                  >
+                    <div className="text-3xl mb-2">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    </div>
+                    <div className="font-bold text-gray-900">{entry.bidder.name}</div>
+                    <div className="text-2xl font-bold text-green-600 mt-2">
+                      ${entry.totalBidAmount.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Recent Listings */}
         <div className="px-4 mb-12">
           <div className="flex justify-between items-center mb-6">
@@ -254,72 +359,108 @@ export default function Marketplace() {
               View All →
             </Link>
           </div>
-          
+
           {recentListings.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentListings.map((listing) => (
-                <Link
-                  key={listing.id}
-                  href={`/marketplace/listings/${listing.id}`}
-                  className="group"
-                >
-                  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1">
-                    {/* Image */}
-                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                      {getFirstImage(listing.images) ? (
-                        <img
-                          src={getFirstImage(listing.images)!}
-                          alt={listing.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
-                        </div>
-                      )}
-                      
-                      {/* Wishlist Heart Button */}
-                      <button
-                        onClick={(e) => toggleWishlist(listing.id, e)}
-                        className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
-                        title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                      >
-                        <svg 
-                          className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
-                          fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
+              {recentListings.map((listing) => {
+                const hasBids = listing._count && listing._count.bids > 0
+
+                return (
+                  <Link
+                    key={listing.id}
+                    href={`/marketplace/listings/${listing.id}`}
+                    className="group"
+                  >
+                    <div
+                      className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1 ${hasBids ? 'animate-shine-border' : ''
+                        }`}
+                      style={hasBids ? {
+                        boxShadow: '0 0 20px rgba(251, 191, 36, 0.5)',
+                        border: '2px solid transparent',
+                        backgroundImage: 'linear-gradient(white, white), linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24)',
+                        backgroundOrigin: 'border-box',
+                        backgroundClip: 'padding-box, border-box',
+                        animation: 'shine 3s linear infinite'
+                      } : {}}
+                    >
+                      {/* Image */}
+                      <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                        {getFirstImage(listing.images) ? (
+                          <img
+                            src={getFirstImage(listing.images)!}
+                            alt={listing.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
+                          </div>
+                        )}
+
+                        {/* Wishlist Heart Button */}
+                        <button
+                          onClick={(e) => toggleWishlist(listing.id, e)}
+                          className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
+                          title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
-                      
-                      <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
-                        {listing.condition.replace('_', ' ')}
+                          <svg
+                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
+                            fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </button>
+
+                        <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
+                          {listing.condition.replace('_', ' ')}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
+                            {listing.title}
+                          </h3>
+                        </div>
+
+                        {/* Bid Info for Auctions */}
+                        {listing.type === 'AUCTION' && (
+                          <div className="mb-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-600">
+                                {listing.currentBid ? 'Current Bid' : 'Starting Bid'}
+                              </span>
+                              <span className="font-bold text-green-600">
+                                ${listing.currentBid || listing.startingBid}
+                              </span>
+                            </div>
+                            {hasBids && (
+                              <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                <span className="mr-1">🔥</span>
+                                {listing._count!.bids} bid{listing._count!.bids !== 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500 flex items-center">
+                            {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
+                          </span>
+                          {listing.type === 'DIRECT_SALE' && (
+                            <span className="text-lg font-bold text-umass-maroon">
+                              ${listing.price}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    
-                    {/* Content */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
-                          {listing.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500 flex items-center">
-                          {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
-                        </span>
-                        <span className="text-lg font-bold text-umass-maroon">
-                          {listing.type === 'DIRECT_SALE' 
-                            ? `$${listing.price}` 
-                            : `$${listing.currentBid || listing.startingBid}`}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                )
+              })}
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-md p-12 text-center">
