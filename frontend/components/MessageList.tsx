@@ -8,10 +8,12 @@ import { Check, CheckCheck } from 'lucide-react';
 interface MessageListProps {
   messages: Message[];
   currentUserId: string;
+  onScroll?: (scrollTop: number) => void;
 }
 
-export default function MessageList({ messages, currentUserId }: MessageListProps) {
+export default function MessageList({ messages, currentUserId, onScroll }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -20,6 +22,13 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (onScroll) {
+      const scrollTop = e.currentTarget.scrollTop;
+      onScroll(scrollTop);
+    }
+  };
 
   const formatTime = (timestamp: Timestamp | Date) => {
     const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
@@ -79,7 +88,11 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+    <div 
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-4 bg-gray-50"
+      onScroll={handleScroll}
+    >
       {messages.length === 0 ? (
         <div className="flex items-center justify-center h-full">
           <div className="text-center text-gray-500">
