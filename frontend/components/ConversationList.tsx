@@ -93,7 +93,7 @@ export default function ConversationList({
                 key={conversationKey}
                 href={`/messages/${conv.listingId}/${conv.otherUserId}`}
                 className={`block p-4 hover:bg-white transition-all duration-150 border-b border-gray-100 ${
-                  isActive ? 'bg-white shadow-sm border-l-4 border-l-blue-600' : 'bg-gray-50'
+                  isActive ? 'bg-white shadow-sm border-l-4 border-l-umass-maroon' : 'bg-gray-50'
                 }`}
               >
                 <div className="flex gap-3">
@@ -125,7 +125,7 @@ export default function ConversationList({
                         {conv.lastMessage}
                       </p>
                       {conv.unreadCount > 0 && (
-                        <span className="flex-shrink-0 bg-blue-600 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                        <span className="flex-shrink-0 bg-umass-maroon text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
                           {conv.unreadCount}
                         </span>
                       )}

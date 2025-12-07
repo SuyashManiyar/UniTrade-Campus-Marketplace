@@ -15,7 +15,7 @@ import {
 } from '@/lib/messaging';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
-import { ArrowLeft, Package, ExternalLink, DollarSign, Tag } from 'lucide-react';
+import { ArrowLeft, Package, ExternalLink, DollarSign, Tag, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
 
@@ -263,51 +263,52 @@ export default function ConversationPage() {
   // const conversationKey = '0';
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Conversation List - Hidden on mobile when viewing a conversation */}
-      <div className="hidden md:block">
-        <ConversationList
-          conversations={conversations}
-          currentConversationKey={conversationKey}
-        />
-      </div>
-
-      {/* Message Area */}
-      <div className="flex-1 flex flex-col bg-white">
-        {/* Header */}
-        <div className="border-b px-4 py-3 bg-white flex items-center gap-3 shadow-sm">
-          <button
-            onClick={() => router.push('/messages')}
-            className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg -ml-2"
-            title="Back to conversations"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          
-          <div className="h-8 w-px bg-gray-300"></div>
-          
-          {/* User Avatar */}
-          <div className={`w-10 h-10 rounded-full ${getAvatarColor(otherUserName || 'User')} flex items-center justify-center text-white font-semibold flex-shrink-0 shadow-sm`}>
-            {otherUserName ? otherUserName[0].toUpperCase() : '?'}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-base text-gray-900 truncate leading-tight">
-              {otherUserName || 'Loading...'}
-            </h2>
-            {listingTitle && (
-              <p className="text-xs text-gray-500 truncate flex items-center gap-1 mt-0.5">
-                <Package size={12} />
-                <span>{listingTitle}</span>
-              </p>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Navigation */}
+      <nav className="bg-white shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/messages" 
+                className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                title="Back to Messages"
+              >
+                <ArrowLeft size={20} />
+              </Link>
+              <div className="h-8 w-px bg-gray-300"></div>
+              <div className="flex items-center gap-2">
+                <MessageCircle size={24} className="text-umass-maroon" />
+                <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/marketplace" className="text-2xl font-bold text-umass-maroon">
+                UniTrade
+              </Link>
+            </div>
           </div>
         </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto p-4">
+        <div className="flex h-[calc(100vh-7rem)] bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Conversation List - Hidden on mobile when viewing a conversation */}
+          <div className="hidden md:block">
+            <ConversationList
+              conversations={conversations}
+              currentConversationKey={conversationKey}
+            />
+          </div>
+
+          {/* Message Area */}
+          <div className="flex-1 flex flex-col bg-white">
 
         {/* Collapsible Listing Banner */}
         {listingDetails && (
           <div
-            className={`border-b bg-gradient-to-r from-blue-50 to-purple-50 overflow-hidden transition-all duration-300 ease-in-out ${
+            className={`flex-1 flex flex-col bg-white ${
               showListingBanner ? 'max-h-48' : 'max-h-14'
             }`}
           >
@@ -347,13 +348,13 @@ export default function ConversationPage() {
                   </h4>
                   
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl font-bold text-blue-600">
+                    <span className="text-xl font-bold text-umass-maroon">
                       ${listingDetails.price || listingDetails.startingBid}
                     </span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                    <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
                       {listingDetails.category?.replace('_', ' ')}
                     </span>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                    <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full">
                       {listingDetails.condition?.replace('_', ' ')}
                     </span>
                   </div>
@@ -408,10 +409,10 @@ export default function ConversationPage() {
                   <span className="font-semibold text-sm text-gray-900 truncate">
                     {listingDetails.title}
                   </span>
-                  <span className="text-sm font-bold text-blue-600 flex-shrink-0">
+                  <span className="text-xl font-bold text-umass-maroon">
                     ${listingDetails.price || listingDetails.startingBid}
                   </span>
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full flex-shrink-0">
+                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
                     {listingDetails.category?.replace('_', ' ')}
                   </span>
                 </div>
@@ -429,8 +430,10 @@ export default function ConversationPage() {
           onScroll={handleScroll}
         />
 
-        {/* Input */}
-        <MessageInput onSend={handleSendMessage} />
+            {/* Input */}
+            <MessageInput onSend={handleSendMessage} />
+          </div>
+        </div>
       </div>
     </div>
   );
