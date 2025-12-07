@@ -136,7 +136,7 @@ export default function MessageList({ messages, currentUserId, onScroll }: Messa
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
-                            ? 'bg-blue-600 text-white rounded-br-sm'
+                            ? 'bg-umass-maroon text-white rounded-br-sm'
                             : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200'
                         }`}
                       >
@@ -146,16 +146,16 @@ export default function MessageList({ messages, currentUserId, onScroll }: Messa
                         }`}>
                           <span
                             className={`text-xs ${
-                              isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                              isOwnMessage ? 'text-red-100' : 'text-gray-500'
                             }`}
                           >
                             {formatTime(message.createdAt)}
                           </span>
                           {isOwnMessage && (
                             message.isRead ? (
-                              <CheckCheck size={14} className="text-blue-100" />
+                              <CheckCheck size={14} className="text-red-100" />
                             ) : (
-                              <Check size={14} className="text-blue-100" />
+                              <Check size={14} className="text-red-100" />
                             )
                           )}
                         </div>

@@ -21,6 +21,7 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
     const token = Cookies.get('token');
@@ -37,6 +38,7 @@ export default function MessagesPage() {
       
       // Try different possible field names
       const userId = decoded.id || decoded.userId || decoded.sub || decoded.user_id;
+      const name = decoded.name || decoded.username || 'User';
       
       if (!userId) {
         console.error('No user ID found in token. Token contents:', decoded);
@@ -45,7 +47,9 @@ export default function MessagesPage() {
       }
       
       setUserId(userId);
+      setUserName(name);
       console.log('User ID set to:', userId);
+      console.log('User name set to:', name);
     } catch (error) {
       console.error('Invalid token:', error);
       setError('Invalid authentication token');
@@ -173,36 +177,50 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="px-8">
-          <div className="flex items-center h-16 gap-3">
-            <Link 
-              href="/marketplace" 
-              className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg -ml-2"
-              title="Back to Marketplace"
-            >
-              <ArrowLeft size={20} />
-            </Link>
-            <div className="h-6 w-px bg-gray-300"></div>
-            <MessageCircle size={22} className="text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+      <nav className="bg-white shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/marketplace" 
+                className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                title="Back to Marketplace"
+              >
+                <ArrowLeft size={20} />
+              </Link>
+              <div className="h-8 w-px bg-gray-300"></div>
+              <div className="flex items-center gap-2">
+                <MessageCircle size={24} className="text-umass-maroon" />
+                <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/marketplace" className="text-2xl font-bold text-umass-maroon">
+                UniTrade
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
-      <div className="flex h-[calc(100vh-4rem)]">
-        <ConversationList conversations={conversations} showHeader={false} />
-        <div className="flex-1 flex items-center justify-center text-gray-500">
-          <div className="text-center p-8">
-            <MessageCircle size={64} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">Select a conversation to start messaging</p>
-            <p className="text-sm text-gray-400">
-              {conversations.length === 0 
-                ? 'No conversations yet. Message a seller to get started!' 
-                : `You have ${conversations.length} conversation${conversations.length !== 1 ? 's' : ''}`}
-            </p>
+      <div className="max-w-7xl mx-auto p-4">
+        <div className="flex h-[calc(100vh-7rem)] bg-white rounded-lg shadow-lg overflow-hidden">
+          <ConversationList conversations={conversations} showHeader={false} />
+          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-gray-50 to-blue-50">
+            <div className="text-center p-8">
+              <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">
+                <MessageCircle size={40} className="text-umass-maroon" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Select a conversation</h2>
+              <p className="text-sm text-gray-600">
+                {conversations.length === 0 
+                  ? 'No conversations yet. Message a seller to get started!' 
+                  : `You have ${conversations.length} conversation${conversations.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
           </div>
         </div>
       </div>
