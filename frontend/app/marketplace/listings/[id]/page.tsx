@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
+import { getSocket, joinListingRoom, leaveListingRoom } from '@/lib/socket'
 
 interface Listing {
   id: string
@@ -42,6 +43,9 @@ interface Listing {
       name: string
     }
   }>
+  _count?: {
+    bids: number
+  }
 }
 
 
@@ -109,13 +113,45 @@ export default function ListingDetail() {
     if (user && listingId) {
       fetchListing()
 
-      // Set up polling for real-time updates (every 5 seconds)
-      const pollInterval = setInterval(() => {
-        fetchListing()
-      }, 5000)
+      // Set up Socket.IO for real-time updates
+      const socket = getSocket()
+      if (socket) {
+        // Join the listing room
+        joinListingRoom(listingId)
 
-      // Cleanup interval on unmount
-      return () => clearInterval(pollInterval)
+        // Listen for bid updates
+        socket.on('bid-update', (data: any) => {
+          console.log('📢 Received bid update:', data)
+          
+          // Update listing state with new bid data
+          setListing((prevListing) => {
+            if (!prevListing) return prevListing
+            
+            return {
+              ...prevListing,
+              currentBid: data.listing.currentBid,
+              bids: data.bids || prevListing.bids,
+              _count: {
+                bids: data.listing.bidCount || prevListing._count?.bids || 0
+              }
+            }
+          })
+
+          // Show notification if it's not the current user's bid
+          if (data.bid.bidder.id !== user.id) {
+            toast.success(`New bid: $${data.bid.amount} by ${data.bid.bidder.name}`, {
+              icon: '🔥',
+              duration: 3000
+            })
+          }
+        })
+
+        // Cleanup on unmount
+        return () => {
+          leaveListingRoom(listingId)
+          socket.off('bid-update')
+        }
+      }
     }
   }, [user, isLoading, router, listingId])
 

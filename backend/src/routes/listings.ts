@@ -4,6 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { listingSchema, bidSchema } from '../utils/validation';
 import { uploadImages, handleUploadError, getFileUrl } from '../middleware/upload';
 import { nlpService } from '../services/nlpService';
+import { emitBidUpdate, emitListingUpdate } from '../socket/socket';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -561,7 +562,7 @@ router.post('/:id/bid', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Create bid and update listing
-    const [bid] = await Promise.all([
+    const [bid, updatedListing] = await Promise.all([
       prisma.bid.create({
         data: {
           amount,
@@ -576,9 +577,45 @@ router.post('/:id/bid', authenticateToken, async (req: AuthRequest, res) => {
       }),
       prisma.listing.update({
         where: { id },
-        data: { currentBid: amount }
+        data: { currentBid: amount },
+        include: {
+          bids: {
+            orderBy: { amount: 'desc' },
+            include: {
+              bidder: {
+                select: { id: true, name: true }
+              }
+            }
+          },
+          _count: {
+            select: { bids: true }
+          }
+        }
       })
     ]);
+
+    // Emit real-time update to all users viewing this listing
+    emitBidUpdate(id, {
+      bid: {
+        id: bid.id,
+        amount: bid.amount,
+        createdAt: bid.createdAt,
+        bidder: bid.bidder
+      },
+      listing: {
+        id: updatedListing.id,
+        currentBid: updatedListing.currentBid,
+        bidCount: updatedListing._count.bids
+      },
+      bids: updatedListing.bids
+    });
+
+    // Emit listing update for marketplace pages
+    emitListingUpdate(id, {
+      id: updatedListing.id,
+      currentBid: updatedListing.currentBid,
+      _count: { bids: updatedListing._count.bids }
+    });
 
     res.status(201).json(bid);
   } catch (error) {

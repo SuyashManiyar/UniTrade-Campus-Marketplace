@@ -6,6 +6,7 @@ import { api } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { getSocket } from '@/lib/socket'
 
 interface Listing {
   id: string
@@ -107,6 +108,35 @@ export default function ListingsPage() {
       }
       if (conditionParam) {
         setSelectedCondition(conditionParam)
+      }
+
+      // Set up Socket.IO for real-time listing updates
+      const socket = getSocket()
+      if (socket) {
+        socket.on('listing-update', (data: any) => {
+          console.log('📢 Received listing update:', data)
+          
+          // Update the listing in state if it exists
+          setListings((prevListings) => {
+            return prevListings.map((listing) => {
+              if (listing.id === data.listingId) {
+                return {
+                  ...listing,
+                  currentBid: data.listing.currentBid,
+                  _count: {
+                    ...listing._count,
+                    bids: data.listing._count?.bids || listing._count?.bids || 0
+                  }
+                }
+              }
+              return listing
+            })
+          })
+        })
+
+        return () => {
+          socket.off('listing-update')
+        }
       }
     }
   }, [user, isLoading, router])
