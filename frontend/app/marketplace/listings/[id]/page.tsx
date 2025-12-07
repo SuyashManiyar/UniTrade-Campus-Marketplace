@@ -44,16 +44,20 @@ interface Listing {
   }>
 }
 
+
+
 export default function ListingDetail() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const listingId = params.id as string
-  
+
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
   const [bidAmount, setBidAmount] = useState('')
   const [submittingBid, setSubmittingBid] = useState(false)
+  const [showBidLeaderboard, setShowBidLeaderboard] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
 
   // Helper function to get all images from images JSON
   const getAllImages = (images: string | null | undefined): string[] => {
@@ -101,9 +105,17 @@ export default function ListingDetail() {
       router.push('/auth/login')
       return
     }
-    
+
     if (user && listingId) {
       fetchListing()
+
+      // Set up polling for real-time updates (every 5 seconds)
+      const pollInterval = setInterval(() => {
+        fetchListing()
+      }, 5000)
+
+      // Cleanup interval on unmount
+      return () => clearInterval(pollInterval)
     }
   }, [user, isLoading, router, listingId])
 
@@ -119,9 +131,26 @@ export default function ListingDetail() {
     }
   }
 
+  const createConfetti = () => {
+    const colors = ['#fbbf24', '#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6']
+    const confettiCount = 50
+
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div')
+      confetti.className = 'confetti'
+      confetti.style.left = Math.random() * 100 + '%'
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]
+      confetti.style.animationDelay = Math.random() * 0.5 + 's'
+      confetti.style.animationDuration = (Math.random() * 2 + 2) + 's'
+      document.body.appendChild(confetti)
+
+      setTimeout(() => confetti.remove(), 3500)
+    }
+  }
+
   const handleBid = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!bidAmount || parseFloat(bidAmount) <= 0) {
       toast.error('Please enter a valid bid amount')
       return
@@ -132,9 +161,19 @@ export default function ListingDetail() {
       await api.post(`/listings/${listingId}/bid`, {
         amount: parseFloat(bidAmount)
       })
-      
+
+      // Show celebration animation
+      setShowCelebration(true)
+      createConfetti()
+
       toast.success('Bid placed successfully!')
       setBidAmount('')
+
+      // Hide celebration after 2 seconds
+      setTimeout(() => {
+        setShowCelebration(false)
+      }, 2000)
+
       fetchListing() // Refresh listing data
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to place bid')
@@ -193,10 +232,10 @@ export default function ListingDetail() {
   }
 
   const isOwner = listing.seller.id === user.id
-  const canBid = listing.type === 'AUCTION' && 
-                 listing.status === 'ACTIVE' && 
-                 !isOwner && 
-                 !isAuctionEnded(listing.auctionEndTime)
+  const canBid = listing.type === 'AUCTION' &&
+    listing.status === 'ACTIVE' &&
+    !isOwner &&
+    !isAuctionEnded(listing.auctionEndTime)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -225,7 +264,7 @@ export default function ListingDetail() {
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Back Button */}
-          <Link 
+          <Link
             href="/marketplace/listings"
             className="text-umass-maroon hover:text-red-800 mb-6 inline-block"
           >
@@ -245,17 +284,16 @@ export default function ListingDetail() {
                     <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
                       {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
                     </span>
-                    <span className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${
-                      listing.condition === 'NEW' ? 'bg-green-100 text-green-800' :
+                    <span className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${listing.condition === 'NEW' ? 'bg-green-100 text-green-800' :
                       listing.condition === 'LIKE_NEW' ? 'bg-emerald-100 text-emerald-800' :
-                      listing.condition === 'GOOD' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-orange-100 text-orange-800'
-                    }`}>
+                        listing.condition === 'GOOD' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-orange-100 text-orange-800'
+                      }`}>
                       ✨ {listing.condition.replace('_', ' ')}
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Price/Bid Info */}
                 <div className="text-right">
                   {listing.type === 'DIRECT_SALE' && listing.price && (
@@ -298,7 +336,7 @@ export default function ListingDetail() {
                 <div>
                   {(() => {
                     const allImages = getAllImages(listing.images)
-                    
+
                     if (allImages.length === 0) {
                       // No images - show placeholder
                       return (
@@ -359,7 +397,7 @@ export default function ListingDetail() {
                               1 / {allImages.length}
                             </div>
                           </div>
-                          
+
                           {/* Thumbnail grid */}
                           <div className="grid grid-cols-4 gap-2">
                             {allImages.map((imageUrl, index) => (
@@ -454,6 +492,121 @@ export default function ListingDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Bidding Leaderboard for this Product */}
+                {listing.type === 'AUCTION' && listing.bids.length > 0 && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <span className="text-2xl mr-2">🏆</span>
+                        Bidding Leaderboard
+                      </h3>
+                      <button
+                        onClick={() => setShowBidLeaderboard(!showBidLeaderboard)}
+                        className="text-umass-maroon hover:text-red-800 font-medium text-sm"
+                      >
+                        {showBidLeaderboard ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+
+                    {showBidLeaderboard && (
+                      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border-2 border-yellow-300 shadow-lg">
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {(() => {
+                            // Group bids by bidder and count their bids
+                            const bidderStats = listing.bids.reduce((acc: any, bid) => {
+                              const bidderId = bid.bidder.id
+                              if (!acc[bidderId]) {
+                                acc[bidderId] = {
+                                  bidder: bid.bidder,
+                                  bidCount: 0,
+                                  highestBid: 0
+                                }
+                              }
+                              acc[bidderId].bidCount++
+                              if (bid.amount > acc[bidderId].highestBid) {
+                                acc[bidderId].highestBid = bid.amount
+                              }
+                              return acc
+                            }, {})
+
+                            // Convert to array and sort by bid count, then by highest bid
+                            const sortedBidders = Object.values(bidderStats).sort((a: any, b: any) => {
+                              if (b.bidCount !== a.bidCount) {
+                                return b.bidCount - a.bidCount
+                              }
+                              return b.highestBid - a.highestBid
+                            })
+
+                            const isAuctionEnded = listing.auctionEndTime && new Date() > new Date(listing.auctionEndTime)
+                            const highestBidder = sortedBidders[0]
+
+                            return sortedBidders.map((stats: any, index: number) => {
+                              const isWinner = isAuctionEnded && index === 0
+                              const isCurrentUser = stats.bidder.id === user.id
+
+                              return (
+                                <div
+                                  key={stats.bidder.id}
+                                  className={`p-3 rounded-lg ${isWinner ? 'bg-gradient-to-r from-green-200 to-green-300 border-2 border-green-500' :
+                                    index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
+                                      index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
+                                        index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
+                                          'bg-white border border-gray-200'
+                                    }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                      <span className={`text-xl font-bold ${isWinner ? 'text-green-600' :
+                                        index === 0 ? 'text-yellow-600' :
+                                          index === 1 ? 'text-gray-600' :
+                                            index === 2 ? 'text-orange-600' :
+                                              'text-gray-500'
+                                        }`}>
+                                        {isWinner ? '👑' : index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                      </span>
+                                      <div>
+                                        <div className="font-semibold text-gray-900">
+                                          {stats.bidder.name}
+                                          {isCurrentUser && <span className="ml-2 text-xs text-blue-600">(You)</span>}
+                                          {isWinner && <span className="ml-2 text-xs font-bold text-green-600">WINNER!</span>}
+                                        </div>
+                                        <div className="text-xs text-gray-600">
+                                          {stats.bidCount} bid{stats.bidCount !== 1 ? 's' : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right flex items-center space-x-2">
+                                      <div>
+                                        <div className="text-lg font-bold text-green-600">
+                                          ${stats.highestBid.toFixed(2)}
+                                        </div>
+                                        <div className="text-xs text-gray-500">Highest Bid</div>
+                                      </div>
+                                      {/* Seller can message bidders */}
+                                      {isOwner && !isCurrentUser && (
+                                        <Link
+                                          href={`/messages/${listing.id}/${stats.bidder.id}`}
+                                          className={`px-3 py-1 rounded text-xs transition-colors ${isWinner
+                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                                            }`}
+                                          title={isWinner ? 'Contact winner' : 'Message bidder'}
+                                        >
+                                          {isWinner ? '📧 Contact' : '💬'}
+                                        </Link>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Sidebar */}
@@ -545,7 +698,7 @@ export default function ListingDetail() {
                       💬 Message Seller
                     </Link>
                   )}
-                  
+
                   {/* Report Listing */}
                   {!isOwner && (
                     <button
@@ -618,6 +771,17 @@ export default function ListingDetail() {
           </div>
         </div>
       </main>
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className="bid-celebration-overlay">
+          <div className="bid-celebration-content">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-3xl font-bold text-umass-maroon mb-2">Bid Placed!</h2>
+            <p className="text-gray-600 text-lg">Your bid has been successfully placed</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

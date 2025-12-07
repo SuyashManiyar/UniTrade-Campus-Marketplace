@@ -22,25 +22,12 @@ interface Listing {
   }
 }
 
-interface LeaderboardEntry {
-  bidder: {
-    id: string
-    name: string
-    rating: number | null
-    ratingCount: number
-  }
-  totalBidAmount: number
-  totalBids: number
-}
-
 export default function Marketplace() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [recentListings, setRecentListings] = useState<Listing[]>([])
   const [stats, setStats] = useState({ total: 0, active: 0 })
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -48,18 +35,8 @@ export default function Marketplace() {
     } else if (user) {
       fetchRecentListings()
       fetchWishlist()
-      fetchLeaderboard()
     }
   }, [user, isLoading, router])
-
-  const fetchLeaderboard = async () => {
-    try {
-      const response = await api.get('/listings/leaderboard/top-bidders')
-      setLeaderboard(response.data)
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error)
-    }
-  }
 
   const fetchRecentListings = async () => {
     try {
@@ -272,85 +249,6 @@ export default function Marketplace() {
           </div>
         </div>
 
-        {/* Leaderboard Section */}
-        {leaderboard.length > 0 && (
-          <div className="px-4 mb-12">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <span className="text-3xl mr-2">🏆</span>
-                Top Bidders
-              </h2>
-              <button
-                onClick={() => setShowLeaderboard(!showLeaderboard)}
-                className="text-umass-maroon hover:text-red-800 font-medium"
-              >
-                {showLeaderboard ? 'Hide' : 'Show All'} →
-              </button>
-            </div>
-
-            {showLeaderboard ? (
-              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-300 shadow-lg">
-                <div className="grid md:grid-cols-2 gap-3">
-                  {leaderboard.map((entry, index) => (
-                    <div
-                      key={entry.bidder.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
-                        index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
-                          index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
-                            'bg-white border border-gray-200'
-                        }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className={`text-xl font-bold ${index === 0 ? 'text-yellow-600' :
-                          index === 1 ? 'text-gray-600' :
-                            index === 2 ? 'text-orange-600' :
-                              'text-gray-500'
-                          }`}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                        </span>
-                        <div>
-                          <div className="font-semibold text-gray-900">{entry.bidder.name}</div>
-                          <div className="text-xs text-gray-600">
-                            {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
-                          ${entry.totalBidAmount.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-3 gap-4">
-                {leaderboard.slice(0, 3).map((entry, index) => (
-                  <div
-                    key={entry.bidder.id}
-                    className={`p-4 rounded-xl shadow-md ${index === 0 ? 'bg-gradient-to-br from-yellow-100 to-yellow-200' :
-                      index === 1 ? 'bg-gradient-to-br from-gray-100 to-gray-200' :
-                        'bg-gradient-to-br from-orange-100 to-orange-200'
-                      }`}
-                  >
-                    <div className="text-3xl mb-2">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </div>
-                    <div className="font-bold text-gray-900">{entry.bidder.name}</div>
-                    <div className="text-2xl font-bold text-green-600 mt-2">
-                      ${entry.totalBidAmount.toFixed(2)}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Recent Listings */}
         <div className="px-4 mb-12">
           <div className="flex justify-between items-center mb-6">
@@ -372,16 +270,7 @@ export default function Marketplace() {
                     className="group"
                   >
                     <div
-                      className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1 ${hasBids ? 'animate-shine-border' : ''
-                        }`}
-                      style={hasBids ? {
-                        boxShadow: '0 0 20px rgba(251, 191, 36, 0.5)',
-                        border: '2px solid transparent',
-                        backgroundImage: 'linear-gradient(white, white), linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24)',
-                        backgroundOrigin: 'border-box',
-                        backgroundClip: 'padding-box, border-box',
-                        animation: 'shine 3s linear infinite'
-                      } : {}}
+                      className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 ${hasBids ? 'animate-shine-border' : ''}`}
                     >
                       {/* Image */}
                       <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
