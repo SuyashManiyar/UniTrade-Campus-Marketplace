@@ -339,6 +339,13 @@ export default function MyListings() {
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
               <Link
+                href="/profile"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                title="Edit Profile"
+              >
+                👤 Profile
+              </Link>
+              <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
               >

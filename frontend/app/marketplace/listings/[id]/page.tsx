@@ -62,6 +62,9 @@ export default function ListingDetail() {
   const [submittingBid, setSubmittingBid] = useState(false)
   const [showBidLeaderboard, setShowBidLeaderboard] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [selectedBidder, setSelectedBidder] = useState<any>(null)
+  const [bidderProfile, setBidderProfile] = useState<any>(null)
+  const [loadingProfile, setLoadingProfile] = useState(false)
 
   // Helper function to get all images from images JSON
   const getAllImages = (images: string | null | undefined): string[] => {
@@ -165,6 +168,28 @@ export default function ListingDetail() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchBidderProfile = async (bidderId: string) => {
+    try {
+      setLoadingProfile(true)
+      const response = await api.get(`/users/${bidderId}`)
+      setBidderProfile(response.data)
+    } catch (error) {
+      toast.error('Failed to fetch bidder profile')
+    } finally {
+      setLoadingProfile(false)
+    }
+  }
+
+  const openBidderProfile = (bidder: any) => {
+    setSelectedBidder(bidder)
+    fetchBidderProfile(bidder.id)
+  }
+
+  const closeBidderProfile = () => {
+    setSelectedBidder(null)
+    setBidderProfile(null)
   }
 
   const createConfetti = () => {
@@ -292,6 +317,13 @@ export default function ListingDetail() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
+              <Link
+                href="/profile"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                title="Edit Profile"
+              >
+                👤 Profile
+              </Link>
             </div>
           </div>
         </div>
@@ -619,18 +651,27 @@ export default function ListingDetail() {
                                         </div>
                                         <div className="text-xs text-gray-500">Highest Bid</div>
                                       </div>
-                                      {/* Seller can message bidders */}
+                                      {/* Seller can view profile and message bidders */}
                                       {isOwner && !isCurrentUser && (
-                                        <Link
-                                          href={`/messages/${listing.id}/${stats.bidder.id}`}
-                                          className={`px-3 py-1 rounded text-xs transition-colors ${isWinner
-                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                                            }`}
-                                          title={isWinner ? 'Contact winner' : 'Message bidder'}
-                                        >
-                                          {isWinner ? '📧 Contact' : '💬'}
-                                        </Link>
+                                        <div className="flex space-x-1">
+                                          <button
+                                            onClick={() => openBidderProfile(stats.bidder)}
+                                            className="px-3 py-1 bg-purple-500 text-white hover:bg-purple-600 rounded text-xs transition-colors"
+                                            title="View bidder profile"
+                                          >
+                                            👤
+                                          </button>
+                                          <Link
+                                            href={`/messages/${listing.id}/${stats.bidder.id}`}
+                                            className={`px-3 py-1 rounded text-xs transition-colors ${isWinner
+                                              ? 'bg-green-600 text-white hover:bg-green-700'
+                                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                                              }`}
+                                            title={isWinner ? 'Contact winner' : 'Message bidder'}
+                                          >
+                                            {isWinner ? '📧 Contact' : '💬'}
+                                          </Link>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -836,6 +877,122 @@ export default function ListingDetail() {
           </div>
         </div>
       </main>
+
+      {/* Bidder Profile Modal */}
+      {selectedBidder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={closeBidderProfile}>
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Bidder Profile</h2>
+              <button
+                onClick={closeBidderProfile}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {loadingProfile ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-umass-maroon"></div>
+                </div>
+              ) : bidderProfile ? (
+                <div className="space-y-6">
+                  {/* Profile Header */}
+                  <div className="flex items-start space-x-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                      {bidderProfile.name[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-gray-900">{bidderProfile.name}</h3>
+                      {bidderProfile.pronouns && (
+                        <p className="text-gray-600">({bidderProfile.pronouns})</p>
+                      )}
+                      {bidderProfile.rating && (
+                        <div className="flex items-center mt-2">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={`text-lg ${i < Math.round(bidderProfile.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-700 ml-2">
+                            {bidderProfile.rating.toFixed(1)} ({bidderProfile.ratingCount} reviews)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Profile Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {bidderProfile.major && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="text-sm text-gray-600 mb-1">🎓 Major</div>
+                        <div className="font-medium text-gray-900">{bidderProfile.major}</div>
+                      </div>
+                    )}
+                    {bidderProfile.location && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="text-sm text-gray-600 mb-1">📍 Location</div>
+                        <div className="font-medium text-gray-900">{bidderProfile.location}</div>
+                      </div>
+                    )}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">📅 Member Since</div>
+                      <div className="font-medium text-gray-900">
+                        {new Date(bidderProfile.createdAt).toLocaleDateString('en-US', {
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                    {bidderProfile._count && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="text-sm text-gray-600 mb-1">📦 Active Listings</div>
+                        <div className="font-medium text-gray-900">{bidderProfile._count.listings}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bio */}
+                  {bidderProfile.bio && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="text-sm font-medium text-blue-900 mb-2">About</div>
+                      <p className="text-gray-700">{bidderProfile.bio}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex space-x-3 pt-4 border-t">
+                    <Link
+                      href={`/messages/${listing.id}/${selectedBidder.id}`}
+                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg text-center hover:bg-blue-700 font-medium"
+                      onClick={closeBidderProfile}
+                    >
+                      💬 Message {bidderProfile.name}
+                    </Link>
+                    <button
+                      onClick={closeBidderProfile}
+                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  Failed to load profile
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Celebration Overlay */}
       {showCelebration && (
