@@ -73,19 +73,19 @@ export default function OTPInput({ length = 6, onComplete, loading = false }: OT
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text/plain').replace(/\D/g, '').slice(0, length)
-    
+
     if (pastedData) {
       const newOtp = [...otp]
       for (let i = 0; i < length; i++) {
         newOtp[i] = pastedData[i] || ''
       }
       setOtp(newOtp)
-      
+
       // Focus the next empty input or the last input
       const nextEmptyIndex = newOtp.findIndex(digit => digit === '')
       const focusIndex = nextEmptyIndex === -1 ? length - 1 : nextEmptyIndex
       inputRefs.current[focusIndex]?.focus()
-      
+
       // Auto-complete if all digits are filled
       if (pastedData.length === length) {
         onComplete(pastedData)
@@ -114,7 +114,7 @@ export default function OTPInput({ length = 6, onComplete, loading = false }: OT
             onPaste={handlePaste}
             disabled={loading}
             className={`
-              w-12 h-12 text-center text-xl font-bold border-2 rounded-lg
+              w-12 h-12 text-center text-xl font-bold border-2 rounded-lg text-gray-900
               focus:outline-none focus:ring-2 focus:ring-umass-maroon focus:border-umass-maroon
               transition-all duration-200
               ${digit ? 'border-umass-maroon bg-red-50' : 'border-gray-300'}
@@ -124,7 +124,7 @@ export default function OTPInput({ length = 6, onComplete, loading = false }: OT
           />
         ))}
       </div>
-      
+
       <div className="text-center">
         <button
           type="button"
@@ -135,7 +135,7 @@ export default function OTPInput({ length = 6, onComplete, loading = false }: OT
           Clear
         </button>
       </div>
-      
+
       <div className="text-center text-xs text-gray-500">
         💡 Tip: You can paste the 6-digit code directly
       </div>

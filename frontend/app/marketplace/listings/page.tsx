@@ -117,7 +117,7 @@ export default function ListingsPage() {
       if (socket) {
         socket.on('listing-update', (data: any) => {
           console.log('📢 Received listing update:', data)
-          
+
           // Update the listing in state if it exists
           setListings((prevListings) => {
             return prevListings.map((listing) => {
@@ -315,9 +315,12 @@ export default function ListingsPage() {
               <Link href="/marketplace" className="text-xl font-bold text-umass-maroon">
                 UniTrade
               </Link>
-              <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium">
+              <button
+                onClick={clearFilters}
+                className="text-gray-700 hover:text-umass-maroon font-medium"
+              >
                 Browse Listings
-              </Link>
+              </button>
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
                 My Listings
               </Link>
