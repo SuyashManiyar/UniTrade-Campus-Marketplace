@@ -8,17 +8,25 @@ import { nlpService } from '../services/nlpService';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Clear NLP cache on server start (useful after prompt changes)
+nlpService.clearCache();
+console.log('🧹 NLP cache cleared on startup');
+
 // NLP-enhanced search endpoint
 router.post('/nlp-search', async (req, res) => {
   try {
     const { query, page = '1', limit = '20' } = req.body;
+    console.log('\n🌐 [API] NLP Search endpoint called');
+    console.log('📝 [API] Query:', query);
 
     if (!query || typeof query !== 'string') {
+      console.log('❌ [API] Invalid query parameter');
       return res.status(400).json({ error: 'Query parameter is required' });
     }
 
     // Parse natural language query using NLP service
     const parsedQuery = await nlpService.parseQuery(query);
+    console.log('🎯 [API] Parsed query result:', JSON.stringify(parsedQuery, null, 2));
 
     // Input validation
     const pageNum = Math.max(1, parseInt(page as string) || 1);
@@ -96,6 +104,11 @@ router.post('/nlp-search', async (req, res) => {
     const totalPages = Math.ceil(total / limitNum);
     const hasNextPage = pageNum < totalPages;
     const hasPrevPage = pageNum > 1;
+
+    console.log('📊 [API] Database query results:');
+    console.log('   Total listings found:', total);
+    console.log('   Returning:', listings.length, 'listings');
+    console.log('   Fallback used:', parsedQuery.confidence === 0);
 
     res.json({
       listings,
@@ -603,6 +616,43 @@ router.get('/user/my-listings', authenticateToken, async (req: AuthRequest, res)
   } catch (error) {
     console.error('Get user listings error:', error);
     res.status(500).json({ error: 'Failed to fetch your listings' });
+  }
+});
+
+// Clear NLP cache (admin/dev endpoint)
+router.post('/nlp-cache/clear', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    // Optional: restrict to admin users only
+    // if (req.user!.role !== 'ADMIN') {
+    //   return res.status(403).json({ error: 'Admin access required' });
+    // }
+
+    nlpService.clearCache();
+    const stats = nlpService.getCacheStats();
+    
+    res.json({ 
+      message: 'NLP cache cleared successfully',
+      stats
+    });
+  } catch (error) {
+    console.error('Clear cache error:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+// Get NLP cache stats (admin/dev endpoint)
+router.get('/nlp-cache/stats', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const stats = nlpService.getCacheStats();
+    const isReady = nlpService.isReady();
+    
+    res.json({ 
+      isReady,
+      ...stats
+    });
+  } catch (error) {
+    console.error('Get cache stats error:', error);
+    res.status(500).json({ error: 'Failed to get cache stats' });
   }
 });
 

@@ -50,6 +50,8 @@ class NLPService {
    * Parse a natural language query into structured search filters
    */
   async parseQuery(query: string): Promise<ParsedQuery> {
+    console.log('\n🔍 [NLP] Starting query parsing:', query);
+    
     // Normalize query for cache key
     const normalizedQuery = query.trim().toLowerCase();
     const cacheKey = this.generateCacheKey(normalizedQuery);
@@ -57,11 +59,14 @@ class NLPService {
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached) {
+      console.log('✅ [NLP] Cache hit! Returning cached result');
+      console.log('📊 [NLP] Cached result:', JSON.stringify(cached, null, 2));
       return cached;
     }
+    console.log('❌ [NLP] Cache miss, calling Gemini API...');
 
     if (!this.isEnabled || !this.model) {
-      // Fallback: return query as keywords
+      console.log('⚠️  [NLP] Service not enabled, using fallback');
       return {
         keywords: [query.trim()],
         confidence: 0
@@ -69,10 +74,14 @@ class NLPService {
     }
 
     try {
+      console.log('📤 [NLP] Sending request to Gemini API...');
       const prompt = this.buildPrompt(query);
       const apiResult = await this.model.generateContent(prompt);
       const response = await apiResult.response;
       const text = response.text();
+      
+      console.log('📥 [NLP] Received response from Gemini');
+      console.log('📝 [NLP] Raw response:', text.substring(0, 200));
       
       // Extract JSON from response (might be wrapped in markdown code blocks)
       let jsonText = text.trim();
@@ -84,16 +93,29 @@ class NLPService {
       
       // Parse JSON response
       const parsed = JSON.parse(jsonText.trim());
+      console.log('🔧 [NLP] Parsed JSON:', JSON.stringify(parsed, null, 2));
       
       // Validate and normalize the response
       const parsedQuery = this.validateFilters(parsed);
+      console.log('✅ [NLP] Validated result:', JSON.stringify(parsedQuery, null, 2));
       
       // Store in cache
       this.cache.set(cacheKey, parsedQuery);
+      console.log('💾 [NLP] Stored in cache');
       
       return parsedQuery;
     } catch (error: any) {
-      console.error('Error parsing query with Gemini:', this.sanitizeError(error));
+      console.error('❌ [NLP] Error parsing query with Gemini:');
+      console.error('   Error type:', error.constructor.name);
+      console.error('   Error message:', error.message);
+      if (error.status) {
+        console.error('   HTTP Status:', error.status, error.statusText);
+      }
+      if (error.errorDetails) {
+        console.error('   Error details:', JSON.stringify(error.errorDetails, null, 2));
+      }
+      console.log('🔄 [NLP] Falling back to keyword search');
+      
       // Fallback: return query as keywords
       return {
         keywords: [query.trim()],
@@ -112,8 +134,11 @@ Valid categories: ELECTRONICS, FURNITURE, TEXTBOOKS, BIKES, CLOTHING, OTHER
 Valid conditions: NEW, LIKE_NEW, GOOD, FAIR, POOR
 
 Extract:
-- keywords: array of search terms (product names, descriptions)
-- category: one of the valid categories (if mentioned)
+- keywords: array of search terms (product names, descriptions). Include synonyms and related terms to improve matching.
+  For example: "winter wear" should include ["winter", "coat", "jacket", "sweater", "warm", "clothing"]
+  "laptop" should include ["laptop", "computer", "notebook"]
+  "study materials" should include ["textbook", "book", "notes", "study"]
+- category: one of the valid categories (if mentioned or implied)
 - condition: one of the valid conditions (if mentioned)
 - minPrice: minimum price (if mentioned, e.g., "over $50", "at least $20")
 - maxPrice: maximum price (if mentioned, e.g., "under $100", "less than $50")
@@ -122,19 +147,22 @@ Extract:
 Examples:
 
 Query: "I want a powerbank in fair condition"
-Response: {"keywords": ["powerbank"], "category": "ELECTRONICS", "condition": "FAIR", "minPrice": null, "maxPrice": null, "confidence": 0.95}
+Response: {"keywords": ["powerbank", "power", "bank", "battery", "charger"], "category": "ELECTRONICS", "condition": "FAIR", "minPrice": null, "maxPrice": null, "confidence": 0.95}
 
 Query: "looking for textbooks under $50"
-Response: {"keywords": ["textbooks"], "category": "TEXTBOOKS", "condition": null, "minPrice": null, "maxPrice": 50, "confidence": 0.9}
+Response: {"keywords": ["textbook", "book", "study", "course"], "category": "TEXTBOOKS", "condition": null, "minPrice": null, "maxPrice": 50, "confidence": 0.9}
 
 Query: "new bike between $100 and $300"
-Response: {"keywords": ["bike"], "category": "BIKES", "condition": "NEW", "minPrice": 100, "maxPrice": 300, "confidence": 0.95}
+Response: {"keywords": ["bike", "bicycle", "cycle"], "category": "BIKES", "condition": "NEW", "minPrice": 100, "maxPrice": 300, "confidence": 0.95}
 
 Query: "furniture in good condition"
-Response: {"keywords": ["furniture"], "category": "FURNITURE", "condition": "GOOD", "minPrice": null, "maxPrice": null, "confidence": 0.9}
+Response: {"keywords": ["furniture", "desk", "chair", "table", "shelf"], "category": "FURNITURE", "condition": "GOOD", "minPrice": null, "maxPrice": null, "confidence": 0.9}
 
 Query: "cheap laptop"
-Response: {"keywords": ["laptop"], "category": "ELECTRONICS", "condition": null, "minPrice": null, "maxPrice": null, "confidence": 0.8}
+Response: {"keywords": ["laptop", "computer", "notebook", "macbook", "chromebook"], "category": "ELECTRONICS", "condition": null, "minPrice": null, "maxPrice": null, "confidence": 0.8}
+
+Query: "winter wear"
+Response: {"keywords": ["winter", "coat", "jacket", "sweater", "warm", "clothing"], "category": "CLOTHING", "condition": null, "minPrice": null, "maxPrice": null, "confidence": 0.85}
 
 Now parse this query:
 Query: "${query}"
