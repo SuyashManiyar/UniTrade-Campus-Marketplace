@@ -3,9 +3,141 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { listingSchema, bidSchema } from '../utils/validation';
 import { uploadImages, handleUploadError, getFileUrl } from '../middleware/upload';
+import { nlpService } from '../services/nlpService';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Clear NLP cache on server start (useful after prompt changes)
+nlpService.clearCache();
+console.log('🧹 NLP cache cleared on startup');
+
+// NLP-enhanced search endpoint
+router.post('/nlp-search', async (req, res) => {
+  try {
+    const { query, page = '1', limit = '20' } = req.body;
+    console.log('\n🌐 [API] NLP Search endpoint called');
+    console.log('📝 [API] Query:', query);
+
+    if (!query || typeof query !== 'string') {
+      console.log('❌ [API] Invalid query parameter');
+      return res.status(400).json({ error: 'Query parameter is required' });
+    }
+
+    // Parse natural language query using NLP service
+    const parsedQuery = await nlpService.parseQuery(query);
+    console.log('🎯 [API] Parsed query result:', JSON.stringify(parsedQuery, null, 2));
+
+    // Input validation
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build where clause from parsed query
+    const where: any = {
+      status: 'ACTIVE'
+    };
+
+    // Apply extracted filters
+    if (parsedQuery.category) {
+      where.category = parsedQuery.category;
+    }
+
+    if (parsedQuery.condition) {
+      where.condition = parsedQuery.condition;
+    }
+
+    // Price range filter
+    if (parsedQuery.minPrice !== undefined || parsedQuery.maxPrice !== undefined) {
+      where.price = {};
+      if (parsedQuery.minPrice !== undefined) {
+        where.price.gte = parsedQuery.minPrice;
+      }
+      if (parsedQuery.maxPrice !== undefined) {
+        where.price.lte = parsedQuery.maxPrice;
+      }
+    }
+
+    // Keyword search in title and description (SQLite compatible)
+    if (parsedQuery.keywords.length > 0) {
+      where.OR = parsedQuery.keywords.flatMap(keyword => [
+        { title: { contains: keyword } },
+        { description: { contains: keyword } }
+      ]);
+    }
+
+    // Execute queries in parallel
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              rating: true,
+              ratingCount: true,
+              location: true
+            }
+          },
+          bids: {
+            orderBy: { amount: 'desc' },
+            take: 1,
+            include: {
+              bidder: {
+                select: { id: true, name: true }
+              }
+            }
+          },
+          _count: {
+            select: { bids: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.listing.count({ where })
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    console.log('📊 [API] Database query results:');
+    console.log('   Total listings found:', total);
+    console.log('   Returning:', listings.length, 'listings');
+    console.log('   Fallback used:', parsedQuery.confidence === 0);
+
+    res.json({
+      listings,
+      extractedFilters: {
+        keywords: parsedQuery.keywords,
+        category: parsedQuery.category,
+        condition: parsedQuery.condition,
+        minPrice: parsedQuery.minPrice,
+        maxPrice: parsedQuery.maxPrice,
+        confidence: parsedQuery.confidence
+      },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: totalPages,
+        hasNextPage,
+        hasPrevPage
+      },
+      fallbackUsed: parsedQuery.confidence === 0
+    });
+  } catch (error) {
+    console.error('NLP search error:', error);
+    res.status(500).json({
+      error: 'Failed to process search query',
+      message: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+    });
+  }
+});
 
 // Get all listings with advanced filters and search
 router.get('/', async (req, res) => {
@@ -484,6 +616,43 @@ router.get('/user/my-listings', authenticateToken, async (req: AuthRequest, res)
   } catch (error) {
     console.error('Get user listings error:', error);
     res.status(500).json({ error: 'Failed to fetch your listings' });
+  }
+});
+
+// Clear NLP cache (admin/dev endpoint)
+router.post('/nlp-cache/clear', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    // Optional: restrict to admin users only
+    // if (req.user!.role !== 'ADMIN') {
+    //   return res.status(403).json({ error: 'Admin access required' });
+    // }
+
+    nlpService.clearCache();
+    const stats = nlpService.getCacheStats();
+    
+    res.json({ 
+      message: 'NLP cache cleared successfully',
+      stats
+    });
+  } catch (error) {
+    console.error('Clear cache error:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+// Get NLP cache stats (admin/dev endpoint)
+router.get('/nlp-cache/stats', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const stats = nlpService.getCacheStats();
+    const isReady = nlpService.isReady();
+    
+    res.json({ 
+      isReady,
+      ...stats
+    });
+  } catch (error) {
+    console.error('Get cache stats error:', error);
+    res.status(500).json({ error: 'Failed to get cache stats' });
   }
 });
 
