@@ -63,7 +63,7 @@ export default function MessageInput({ onSend, disabled }: MessageInputProps) {
         <button
           type="submit"
           disabled={!message.trim() || disabled}
-          className="flex-shrink-0 w-11 h-11 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-150 shadow-md hover:shadow-lg disabled:shadow-none"
+          className="flex-shrink-0 w-11 h-11 bg-umass-maroon text-white rounded-full hover:bg-red-800 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-150 shadow-md hover:shadow-lg disabled:shadow-none"
           title="Send message (Enter)"
         >
           <Send size={18} />
