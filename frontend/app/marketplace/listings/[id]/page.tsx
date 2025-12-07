@@ -122,11 +122,11 @@ export default function ListingDetail() {
         // Listen for bid updates
         socket.on('bid-update', (data: any) => {
           console.log('📢 Received bid update:', data)
-          
+
           // Update listing state with new bid data
           setListing((prevListing) => {
             if (!prevListing) return prevListing
-            
+
             return {
               ...prevListing,
               currentBid: data.listing.currentBid,
@@ -698,6 +698,35 @@ export default function ListingDetail() {
 
                 {/* Actions */}
                 <div className="space-y-3">
+                  {/* Status Notice for SOLD/CANCELLED/EXPIRED items */}
+                  {(listing.status === 'SOLD' || listing.status === 'CANCELLED' || listing.status === 'EXPIRED') && !isOwner && (
+                    <div className={`p-4 rounded-lg border-2 ${listing.status === 'SOLD' ? 'bg-blue-50 border-blue-200' :
+                      listing.status === 'CANCELLED' ? 'bg-red-50 border-red-200' :
+                        'bg-gray-50 border-gray-200'
+                      }`}>
+                      <div className="flex items-center mb-2">
+                        <span className="text-2xl mr-2">
+                          {listing.status === 'SOLD' ? '✓' : listing.status === 'CANCELLED' ? '✕' : '⏰'}
+                        </span>
+                        <span className={`font-bold text-lg ${listing.status === 'SOLD' ? 'text-blue-800' :
+                          listing.status === 'CANCELLED' ? 'text-red-800' :
+                            'text-gray-800'
+                          }`}>
+                          {listing.status === 'SOLD' ? 'Item Sold' :
+                            listing.status === 'CANCELLED' ? 'Listing Cancelled' :
+                              'Auction Expired'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {listing.status === 'SOLD'
+                          ? 'This item has been sold and is no longer available.'
+                          : listing.status === 'CANCELLED'
+                            ? 'This listing has been cancelled by the seller.'
+                            : 'This auction has expired and is no longer accepting bids.'}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Bidding Form */}
                   {canBid && (
                     <form onSubmit={handleBid} className="space-y-3">
@@ -725,8 +754,8 @@ export default function ListingDetail() {
                     </form>
                   )}
 
-                  {/* Contact Seller */}
-                  {!isOwner && (
+                  {/* Contact Seller - Only show for ACTIVE listings */}
+                  {!isOwner && listing.status === 'ACTIVE' && (
                     <Link
                       href={`/messages/${listing.id}/${listing.seller.id}`}
                       className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg text-center block hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium shadow-md hover:shadow-lg transition-all"
@@ -735,8 +764,8 @@ export default function ListingDetail() {
                     </Link>
                   )}
 
-                  {/* Report Listing */}
-                  {!isOwner && (
+                  {/* Report Listing - Only show for ACTIVE listings */}
+                  {!isOwner && listing.status === 'ACTIVE' && (
                     <button
                       onClick={() => toast.error('Report feature coming soon!')}
                       className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-center hover:bg-gray-200 focus:outline-none text-sm font-medium"
