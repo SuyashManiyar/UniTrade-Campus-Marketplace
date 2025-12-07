@@ -6,6 +6,7 @@ import messageRoutes from './messages';
 import adminRoutes from './admin';
 import devRoutes from './dev';
 import wishlistRoutes from './wishlist';
+import reportRoutes from './reports';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/messages', messageRoutes);
 router.use('/admin', adminRoutes);
 router.use('/dev', devRoutes);
 router.use('/wishlist', wishlistRoutes);
+router.use('/reports', reportRoutes);
 
 export default router;

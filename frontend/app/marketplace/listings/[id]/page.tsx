@@ -54,6 +54,10 @@ export default function ListingDetail() {
   const [loading, setLoading] = useState(true)
   const [bidAmount, setBidAmount] = useState('')
   const [submittingBid, setSubmittingBid] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
 
   // Helper function to get all images from images JSON
   const getAllImages = (images: string | null | undefined): string[] => {
@@ -140,6 +144,33 @@ export default function ListingDetail() {
       toast.error(error.response?.data?.error || 'Failed to place bid')
     } finally {
       setSubmittingBid(false)
+    }
+  }
+
+  const handleReport = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!reportReason) {
+      toast.error('Please select a reason for reporting')
+      return
+    }
+
+    try {
+      setSubmittingReport(true)
+      await api.post('/reports', {
+        listingId: listing!.id,
+        reason: reportReason,
+        details: reportDetails || null
+      })
+      
+      toast.success('Report submitted successfully. Our team will review it.')
+      setShowReportModal(false)
+      setReportReason('')
+      setReportDetails('')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to submit report')
+    } finally {
+      setSubmittingReport(false)
     }
   }
 
@@ -549,7 +580,7 @@ export default function ListingDetail() {
                   {/* Report Listing */}
                   {!isOwner && (
                     <button
-                      onClick={() => toast.error('Report feature coming soon!')}
+                      onClick={() => setShowReportModal(true)}
                       className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-center hover:bg-gray-200 focus:outline-none text-sm font-medium"
                     >
                       🚩 Report Listing
@@ -618,6 +649,77 @@ export default function ListingDetail() {
           </div>
         </div>
       </main>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Report Listing</h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleReport} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for reporting *
+                </label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  required
+                >
+                  <option value="">Select a reason</option>
+                  <option value="SPAM">Spam or misleading</option>
+                  <option value="INAPPROPRIATE">Inappropriate content</option>
+                  <option value="SCAM">Suspected scam</option>
+                  <option value="PROHIBITED">Prohibited item</option>
+                  <option value="DUPLICATE">Duplicate listing</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional details (optional)
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows={4}
+                  placeholder="Please provide any additional information..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReport}
+                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

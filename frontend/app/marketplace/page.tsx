@@ -15,6 +15,7 @@ interface Listing {
   condition: string
   images?: string | null
   type: string
+  status: string
   currentBid?: number
   startingBid?: number
   _count?: {
@@ -63,11 +64,11 @@ export default function Marketplace() {
 
   const fetchRecentListings = async () => {
     try {
-      const response = await api.get('/listings?limit=6')
+      const response = await api.get('/listings?limit=6&sortBy=newest')
       setRecentListings(response.data.listings || [])
       setStats({
         total: response.data.total || 0,
-        active: response.data.listings?.filter((l: Listing) => l).length || 0
+        active: response.data.listings?.filter((l: Listing) => l.status === 'ACTIVE').length || 0
       })
     } catch (error) {
       console.error('Failed to fetch listings:', error)
@@ -216,39 +217,55 @@ export default function Marketplace() {
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 Welcome to UniTrade
               </h1>
-              <p className="text-xl mb-8 text-red-50">
+              <p className="text-xl mb-3 text-red-50">
                 Buy, sell, and trade with fellow UMass students in a trusted community.
+              </p>
+              <p className="text-lg mb-8 text-red-100">
+                Save money, support your peers, and skip the shipping costs.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/marketplace/listings"
                   className="bg-white text-umass-maroon px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
                 >
-                  Browse Listings
+                  Start Shopping Now
                 </Link>
                 <Link
                   href="/marketplace/create-listing"
                   className="bg-transparent text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors border-2 border-white"
                 >
-                  Sell an Item
+                  Post Your Item (It's Free!)
                 </Link>
               </div>
-
-              {/* Stats */}
-              <div className="mt-10 grid grid-cols-3 gap-6">
-                <div>
-                  <div className="text-3xl font-bold">{stats.total}</div>
-                  <div className="text-red-100 text-sm">Total Listings</div>
+              
+              {/* Stats - Only show if we have listings */}
+              {stats.total > 0 ? (
+                <div className="mt-10 grid grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-3xl font-bold">{stats.total}+</div>
+                    <div className="text-red-100 text-sm">Items Available</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">{stats.active}</div>
+                    <div className="text-red-100 text-sm">Active Sellers</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">100%</div>
+                    <div className="text-red-100 text-sm">Verified UMass IDs</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">{stats.active}</div>
-                  <div className="text-red-100 text-sm">Active Now</div>
+              ) : (
+                <div className="mt-10 grid grid-cols-2 gap-8">
+                  <div>
+                    <div className="text-3xl font-bold">100%</div>
+                    <div className="text-red-100 text-sm">Verified UMass Students</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">Secure</div>
+                    <div className="text-red-100 text-sm">Shop with Confidence</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">100%</div>
-                  <div className="text-red-100 text-sm">Verified Students</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -354,7 +371,10 @@ export default function Marketplace() {
         {/* Recent Listings */}
         <div className="px-4 mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recent Listings</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Student Favorites</h2>
+              <p className="text-gray-600 text-sm mt-1">Fresh deals from your UMass community</p>
+            </div>
             <Link href="/marketplace/listings" className="text-umass-maroon hover:text-red-800 font-medium">
               View All →
             </Link>
@@ -362,105 +382,89 @@ export default function Marketplace() {
 
           {recentListings.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentListings.map((listing) => {
-                const hasBids = listing._count && listing._count.bids > 0
-
-                return (
-                  <Link
-                    key={listing.id}
-                    href={`/marketplace/listings/${listing.id}`}
-                    className="group"
-                  >
-                    <div
-                      className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1 ${hasBids ? 'animate-shine-border' : ''
-                        }`}
-                      style={hasBids ? {
-                        boxShadow: '0 0 20px rgba(251, 191, 36, 0.5)',
-                        border: '2px solid transparent',
-                        backgroundImage: 'linear-gradient(white, white), linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24)',
-                        backgroundOrigin: 'border-box',
-                        backgroundClip: 'padding-box, border-box',
-                        animation: 'shine 3s linear infinite'
-                      } : {}}
-                    >
-                      {/* Image */}
-                      <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                        {getFirstImage(listing.images) ? (
-                          <img
-                            src={getFirstImage(listing.images)!}
-                            alt={listing.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full">
-                            <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
-                          </div>
-                        )}
-
-                        {/* Wishlist Heart Button */}
-                        <button
-                          onClick={(e) => toggleWishlist(listing.id, e)}
-                          className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
-                          title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+              {recentListings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  href={`/marketplace/listings/${listing.id}`}
+                  className="group"
+                >
+                  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1">
+                    {/* Image */}
+                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                      {getFirstImage(listing.images) ? (
+                        <img
+                          src={getFirstImage(listing.images)!}
+                          alt={listing.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
+                        </div>
+                      )}
+                      
+                      {/* Wishlist Heart Button */}
+                      <button
+                        onClick={(e) => toggleWishlist(listing.id, e)}
+                        className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
+                        title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                      >
+                        <svg 
+                          className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
+                          fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
                         >
-                          <svg
-                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
-                            fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        </button>
-
-                        <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
-                          {listing.condition.replace('_', ' ')}
-                        </div>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </button>
+                      
+                      <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
+                        {listing.condition.replace('_', ' ')}
                       </div>
-
-                      {/* Content */}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
-                            {listing.title}
-                          </h3>
-                        </div>
-
-                        {/* Bid Info for Auctions */}
-                        {listing.type === 'AUCTION' && (
-                          <div className="mb-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600">
-                                {listing.currentBid ? 'Current Bid' : 'Starting Bid'}
-                              </span>
-                              <span className="font-bold text-green-600">
-                                ${listing.currentBid || listing.startingBid}
-                              </span>
-                            </div>
-                            {hasBids && (
-                              <div className="text-xs text-gray-500 mt-1 flex items-center">
-                                <span className="mr-1">🔥</span>
-                                {listing._count!.bids} bid{listing._count!.bids !== 1 ? 's' : ''}
-                              </div>
-                            )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1 mb-2">
+                        {listing.title}
+                      </h3>
+                      
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs text-gray-500 flex items-center">
+                          {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          listing.type === 'AUCTION' 
+                            ? 'bg-orange-100 text-orange-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {listing.type === 'AUCTION' ? '⚡ Auction' : '💰 Buy Now'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs text-gray-500">
+                            {listing.type === 'AUCTION' ? 'Current Bid' : 'Price'}
                           </div>
-                        )}
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500 flex items-center">
-                            {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
-                          </span>
-                          {listing.type === 'DIRECT_SALE' && (
-                            <span className="text-lg font-bold text-umass-maroon">
-                              ${listing.price}
-                            </span>
-                          )}
+                          <div className="text-2xl font-bold text-umass-maroon">
+                            ${listing.type === 'DIRECT_SALE' 
+                              ? listing.price 
+                              : (listing.currentBid || listing.startingBid)}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500">Condition</div>
+                          <div className="text-sm font-medium text-gray-700">
+                            {listing.condition.replace('_', ' ')}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </Link>
-                )
-              })}
+                  </div>
+                </Link>
+              ))}
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-md p-12 text-center">
