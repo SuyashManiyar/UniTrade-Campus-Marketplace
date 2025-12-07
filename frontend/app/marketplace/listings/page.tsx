@@ -49,7 +49,7 @@ export default function ListingsPage() {
   const router = useRouter()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedCondition, setSelectedCondition] = useState('')
   const [minPrice, setMinPrice] = useState('')
@@ -57,6 +57,8 @@ export default function ListingsPage() {
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [extractedFilters, setExtractedFilters] = useState<any>(null)
+  const [nlpFailed, setNlpFailed] = useState(false)
 
   const categories = ['ELECTRONICS', 'FURNITURE', 'TEXTBOOKS', 'BIKES', 'CLOTHING', 'OTHER']
   const conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']
@@ -122,14 +124,14 @@ export default function ListingsPage() {
     }
   }, [user, isLoading, router])
 
-  // Fetch listings when filters change or on initial load
+  // Fetch listings on initial load and when manual filters change
   useEffect(() => {
     if (user) {
       fetchListings()
       fetchWishlist()
       fetchLeaderboard()
     }
-  }, [user, selectedCategory, selectedCondition, searchTerm, minPrice, maxPrice])
+  }, [user, selectedCategory, selectedCondition, minPrice, maxPrice])
 
   const fetchLeaderboard = async () => {
     try {
@@ -178,23 +180,87 @@ export default function ListingsPage() {
   }
 
   const fetchListings = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
+    if (!searchQuery && !selectedCategory && !selectedCondition && !minPrice && !maxPrice) {
+      // If no search query and no filters, fetch all listings
+      try {
+        setLoading(true)
+        const response = await api.get('/listings')
+        setListings(response.data.listings)
+        setExtractedFilters(null)
+        setNlpFailed(false)
+      } catch (error) {
+        toast.error('Failed to fetch listings')
+        console.error('Error fetching listings:', error)
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
-      if (searchTerm) params.append('search', searchTerm)
-      if (selectedCategory) params.append('category', selectedCategory)
-      if (selectedCondition) params.append('condition', selectedCondition)
-      if (minPrice) params.append('minPrice', minPrice)
-      if (maxPrice) params.append('maxPrice', maxPrice)
+    // Always try NLP search first if there's a search query
+    if (searchQuery) {
+      try {
+        setLoading(true)
+        const response = await api.post('/listings/nlp-search', {
+          query: searchQuery
+        })
+        
+        // Apply manual filters on top of NLP results if user has set them
+        const manualFilters: any = {}
+        if (selectedCategory) manualFilters.category = selectedCategory
+        if (selectedCondition) manualFilters.condition = selectedCondition
+        if (minPrice) manualFilters.minPrice = parseFloat(minPrice)
+        if (maxPrice) manualFilters.maxPrice = parseFloat(maxPrice)
+        
+        // Filter the NLP results with manual filters
+        let filteredListings = response.data.listings
+        if (Object.keys(manualFilters).length > 0) {
+          filteredListings = filteredListings.filter((listing: Listing) => {
+            if (manualFilters.category && listing.category !== manualFilters.category) return false
+            if (manualFilters.condition && listing.condition !== manualFilters.condition) return false
+            if (manualFilters.minPrice && listing.price < manualFilters.minPrice) return false
+            if (manualFilters.maxPrice && listing.price > manualFilters.maxPrice) return false
+            return true
+          })
+        }
+        
+        setListings(filteredListings)
+        setExtractedFilters(response.data.extractedFilters)
+        
+        // Show message if NLP failed
+        if (response.data.fallbackUsed) {
+          setNlpFailed(true)
+          toast('Smart search unavailable, using standard search', { icon: 'ℹ️' })
+        } else {
+          setNlpFailed(false)
+        }
+      } catch (error) {
+        toast.error('Failed to fetch listings')
+        console.error('Error fetching listings:', error)
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      // Use manual filters
+      try {
+        setLoading(true)
+        const params = new URLSearchParams()
 
-      const response = await api.get(`/listings?${params.toString()}`)
-      setListings(response.data.listings)
-    } catch (error) {
-      toast.error('Failed to fetch listings')
-      console.error('Error fetching listings:', error)
-    } finally {
-      setLoading(false)
+        if (selectedCategory) params.append('category', selectedCategory)
+        if (selectedCondition) params.append('condition', selectedCondition)
+        if (minPrice) params.append('minPrice', minPrice)
+        if (maxPrice) params.append('maxPrice', maxPrice)
+
+        const response = await api.get(`/listings?${params.toString()}`)
+        setListings(response.data.listings)
+        setExtractedFilters(null)
+        setNlpFailed(false)
+      } catch (error) {
+        toast.error('Failed to fetch listings')
+        console.error('Error fetching listings:', error)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -204,12 +270,14 @@ export default function ListingsPage() {
   }
 
   const clearFilters = () => {
-    setSearchTerm('')
+    setSearchQuery('')
     setSelectedCategory('')
     setSelectedCondition('')
     setMinPrice('')
     setMaxPrice('')
-    setTimeout(fetchListings, 100)
+    setExtractedFilters(null)
+    setNlpFailed(false)
+    setTimeout(() => fetchListings(), 100)
   }
 
   if (isLoading || !user) {
@@ -275,19 +343,56 @@ export default function ListingsPage() {
             {/* Search and Filters */}
             <div className="bg-white p-6 rounded-lg shadow mb-6">
               <form onSubmit={handleSearch} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Search
+                {/* Smart Search Input */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      🤖 Smart Search
                     </label>
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search listings..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
-                    />
                   </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder='Try: "laptop in good condition under $500"'
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  />
+                  {nlpFailed && (
+                    <p className="mt-1 text-sm text-orange-600">
+                      ⚠️ Smart search unavailable - using standard search
+                    </p>
+                  )}
+                  {extractedFilters && extractedFilters.confidence > 0 && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                      <p className="text-sm font-medium text-blue-900 mb-1">Filters applied:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {extractedFilters.keywords && extractedFilters.keywords.length > 0 && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                            {extractedFilters.keywords.join(', ')}
+                          </span>
+                        )}
+                        {(selectedCategory || extractedFilters.category) && (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                            {selectedCategory || extractedFilters.category}
+                          </span>
+                        )}
+                        {(selectedCondition || extractedFilters.condition) && (
+                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                            {selectedCondition || extractedFilters.condition}
+                          </span>
+                        )}
+                        {(minPrice || maxPrice || extractedFilters.minPrice || extractedFilters.maxPrice) && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                            ${minPrice || extractedFilters.minPrice || 0} - ${maxPrice || extractedFilters.maxPrice || '∞'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

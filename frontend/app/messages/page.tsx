@@ -63,6 +63,9 @@ export default function MessagesPage() {
         console.log('Received conversations:', convs);
         console.log('Starting to fetch user and listing details...');
         
+        // Show loading state while fetching
+        setLoading(true);
+        
         // Fetch user names and listing titles for conversations
         const conversationsWithDetails = await Promise.all(
           convs.map(async (conv) => {
@@ -75,6 +78,7 @@ export default function MessagesPage() {
               console.log('Fetching user details for:', conv.otherUserId);
               const response = await fetch(`${API_URL}/users/${conv.otherUserId}`, {
                 headers: { Authorization: `Bearer ${token}` },
+                cache: 'no-store', // Prevent caching issues
               });
               
               if (response.ok) {
@@ -83,17 +87,11 @@ export default function MessagesPage() {
                 updatedConv.otherUserName = userData.name || 'Unknown User';
               } else {
                 console.error('Failed to fetch user:', response.status);
-                // Keep the original name if fetch fails
-                if (!updatedConv.otherUserName || updatedConv.otherUserName === 'User') {
-                  updatedConv.otherUserName = 'Unknown User';
-                }
+                updatedConv.otherUserName = 'Unknown User';
               }
             } catch (err) {
               console.error('Error fetching user name:', err);
-              // Keep the original name if fetch fails
-              if (!updatedConv.otherUserName || updatedConv.otherUserName === 'User') {
-                updatedConv.otherUserName = 'Unknown User';
-              }
+              updatedConv.otherUserName = 'Unknown User';
             }
             
             // Always fetch listing details
@@ -101,6 +99,7 @@ export default function MessagesPage() {
               console.log('Fetching listing details for:', conv.listingId);
               const response = await fetch(`${API_URL}/listings/${conv.listingId}`, {
                 headers: { Authorization: `Bearer ${token}` },
+                cache: 'no-store', // Prevent caching issues
               });
               
               if (response.ok) {
@@ -120,15 +119,8 @@ export default function MessagesPage() {
         
         console.log('Finished fetching details. Final conversations:', conversationsWithDetails);
         
-        // Filter out any conversations that still have "User" as the name after fetching
-        const validConversations = conversationsWithDetails.filter(
-          conv => conv.otherUserName && conv.otherUserName !== 'User' && conv.otherUserName !== 'Unknown User'
-        );
-        
-        console.log('Valid conversations after filtering:', validConversations);
-        
-        // Force update by creating new array reference
-        setConversations([...validConversations]);
+        // Update state with fetched data
+        setConversations(conversationsWithDetails);
         setLoading(false);
       });
 
@@ -183,24 +175,25 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/marketplace" className="text-gray-600 hover:text-gray-900">
-                <ArrowLeft size={24} />
-              </Link>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <MessageCircle size={24} />
-                Messages
-              </h1>
-            </div>
+      <nav className="bg-white shadow-sm">
+        <div className="px-8">
+          <div className="flex items-center h-16 gap-3">
+            <Link 
+              href="/marketplace" 
+              className="text-gray-600 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-lg -ml-2"
+              title="Back to Marketplace"
+            >
+              <ArrowLeft size={20} />
+            </Link>
+            <div className="h-6 w-px bg-gray-300"></div>
+            <MessageCircle size={22} className="text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
           </div>
         </div>
       </nav>
 
       <div className="flex h-[calc(100vh-4rem)]">
-        <ConversationList conversations={conversations} />
+        <ConversationList conversations={conversations} showHeader={false} />
         <div className="flex-1 flex items-center justify-center text-gray-500">
           <div className="text-center p-8">
             <MessageCircle size={64} className="mx-auto mb-4 opacity-50" />
