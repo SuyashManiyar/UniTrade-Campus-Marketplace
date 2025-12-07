@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
+import { getSocket } from '@/lib/socket'
 
 interface Listing {
   id: string
@@ -23,25 +24,12 @@ interface Listing {
   }
 }
 
-interface LeaderboardEntry {
-  bidder: {
-    id: string
-    name: string
-    rating: number | null
-    ratingCount: number
-  }
-  totalBidAmount: number
-  totalBids: number
-}
-
 export default function Marketplace() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [recentListings, setRecentListings] = useState<Listing[]>([])
   const [stats, setStats] = useState({ total: 0, active: 0 })
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -49,18 +37,37 @@ export default function Marketplace() {
     } else if (user) {
       fetchRecentListings()
       fetchWishlist()
-      fetchLeaderboard()
+
+      // Set up Socket.IO for real-time listing updates
+      const socket = getSocket()
+      if (socket) {
+        socket.on('listing-update', (data: any) => {
+          console.log('📢 Received listing update:', data)
+          
+          // Update the listing in state if it exists
+          setRecentListings((prevListings) => {
+            return prevListings.map((listing) => {
+              if (listing.id === data.listingId) {
+                return {
+                  ...listing,
+                  currentBid: data.listing.currentBid,
+                  _count: {
+                    ...listing._count,
+                    bids: data.listing._count?.bids || listing._count?.bids || 0
+                  }
+                }
+              }
+              return listing
+            })
+          })
+        })
+
+        return () => {
+          socket.off('listing-update')
+        }
+      }
     }
   }, [user, isLoading, router])
-
-  const fetchLeaderboard = async () => {
-    try {
-      const response = await api.get('/listings/leaderboard/top-bidders')
-      setLeaderboard(response.data)
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error)
-    }
-  }
 
   const fetchRecentListings = async () => {
     try {
@@ -289,85 +296,6 @@ export default function Marketplace() {
           </div>
         </div>
 
-        {/* Leaderboard Section */}
-        {leaderboard.length > 0 && (
-          <div className="px-4 mb-12">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <span className="text-3xl mr-2">🏆</span>
-                Top Bidders
-              </h2>
-              <button
-                onClick={() => setShowLeaderboard(!showLeaderboard)}
-                className="text-umass-maroon hover:text-red-800 font-medium"
-              >
-                {showLeaderboard ? 'Hide' : 'Show All'} →
-              </button>
-            </div>
-
-            {showLeaderboard ? (
-              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-300 shadow-lg">
-                <div className="grid md:grid-cols-2 gap-3">
-                  {leaderboard.map((entry, index) => (
-                    <div
-                      key={entry.bidder.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
-                        index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
-                          index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
-                            'bg-white border border-gray-200'
-                        }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className={`text-xl font-bold ${index === 0 ? 'text-yellow-600' :
-                          index === 1 ? 'text-gray-600' :
-                            index === 2 ? 'text-orange-600' :
-                              'text-gray-500'
-                          }`}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                        </span>
-                        <div>
-                          <div className="font-semibold text-gray-900">{entry.bidder.name}</div>
-                          <div className="text-xs text-gray-600">
-                            {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
-                          ${entry.totalBidAmount.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-3 gap-4">
-                {leaderboard.slice(0, 3).map((entry, index) => (
-                  <div
-                    key={entry.bidder.id}
-                    className={`p-4 rounded-xl shadow-md ${index === 0 ? 'bg-gradient-to-br from-yellow-100 to-yellow-200' :
-                      index === 1 ? 'bg-gradient-to-br from-gray-100 to-gray-200' :
-                        'bg-gradient-to-br from-orange-100 to-orange-200'
-                      }`}
-                  >
-                    <div className="text-3xl mb-2">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </div>
-                    <div className="font-bold text-gray-900">{entry.bidder.name}</div>
-                    <div className="text-2xl font-bold text-green-600 mt-2">
-                      ${entry.totalBidAmount.toFixed(2)}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Recent Listings */}
         <div className="px-4 mb-12">
           <div className="flex justify-between items-center mb-6">
@@ -382,82 +310,78 @@ export default function Marketplace() {
 
           {recentListings.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentListings.map((listing) => (
-                <Link
-                  key={listing.id}
-                  href={`/marketplace/listings/${listing.id}`}
-                  className="group"
-                >
-                  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden transform hover:-translate-y-1">
-                    {/* Image */}
-                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                      {getFirstImage(listing.images) ? (
-                        <img
-                          src={getFirstImage(listing.images)!}
-                          alt={listing.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
-                        </div>
-                      )}
-                      
-                      {/* Wishlist Heart Button */}
-                      <button
-                        onClick={(e) => toggleWishlist(listing.id, e)}
-                        className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
-                        title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                      >
-                        <svg 
-                          className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
-                          fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
+              {recentListings.map((listing) => {
+                const hasBids = listing._count && listing._count.bids > 0
+
+                return (
+                  <Link
+                    key={listing.id}
+                    href={`/marketplace/listings/${listing.id}`}
+                    className="group"
+                  >
+                    <div
+                      className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 ${hasBids ? 'animate-shine-border' : ''}`}
+                    >
+                      {/* Image */}
+                      <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                        {getFirstImage(listing.images) ? (
+                          <img
+                            src={getFirstImage(listing.images)!}
+                            alt={listing.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="text-6xl">{getCategoryIcon(listing.category)}</div>
+                          </div>
+                        )}
+
+                        {/* Wishlist Heart Button */}
+                        <button
+                          onClick={(e) => toggleWishlist(listing.id, e)}
+                          className="absolute top-2 left-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
+                          title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
-                      
-                      <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
-                        {listing.condition.replace('_', ' ')}
-                      </div>
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1 mb-2">
-                        {listing.title}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs text-gray-500 flex items-center">
-                          {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
-                        </span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          listing.type === 'AUCTION' 
-                            ? 'bg-orange-100 text-orange-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {listing.type === 'AUCTION' ? '⚡ Auction' : '💰 Buy Now'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs text-gray-500">
-                            {listing.type === 'AUCTION' ? 'Current Bid' : 'Price'}
-                          </div>
-                          <div className="text-2xl font-bold text-umass-maroon">
-                            ${listing.type === 'DIRECT_SALE' 
-                              ? listing.price 
-                              : (listing.currentBid || listing.startingBid)}
-                          </div>
+                          <svg
+                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
+                            fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        </button>
+
+                        <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold">
+                          {listing.condition.replace('_', ' ')}
                         </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">Condition</div>
-                          <div className="text-sm font-medium text-gray-700">
-                            {listing.condition.replace('_', ' ')}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
+                            {listing.title}
+                          </h3>
+                        </div>
+
+                        {/* Bid Info for Auctions */}
+                        {listing.type === 'AUCTION' && (
+                          <div className="mb-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-600">
+                                {listing.currentBid ? 'Current Bid' : 'Starting Bid'}
+                              </span>
+                              <span className="font-bold text-green-600">
+                                ${listing.currentBid || listing.startingBid}
+                              </span>
+                            </div>
+                            {hasBids && (
+                              <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                <span className="mr-1">🔥</span>
+                                {listing._count!.bids} bid{listing._count!.bids !== 1 ? 's' : ''}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

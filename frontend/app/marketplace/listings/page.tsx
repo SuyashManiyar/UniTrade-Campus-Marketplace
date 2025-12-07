@@ -6,6 +6,7 @@ import { api } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { getSocket } from '@/lib/socket'
 
 interface Listing {
   id: string
@@ -33,17 +34,6 @@ interface Listing {
   }
 }
 
-interface LeaderboardEntry {
-  bidder: {
-    id: string
-    name: string
-    rating: number | null
-    ratingCount: number
-  }
-  totalBidAmount: number
-  totalBids: number
-}
-
 export default function ListingsPage() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
@@ -55,8 +45,6 @@ export default function ListingsPage() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set())
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [extractedFilters, setExtractedFilters] = useState<any>(null)
   const [nlpFailed, setNlpFailed] = useState(false)
 
@@ -114,12 +102,41 @@ export default function ListingsPage() {
       const urlParams = new URLSearchParams(window.location.search)
       const categoryParam = urlParams.get('category')
       const conditionParam = urlParams.get('condition')
-      
+
       if (categoryParam) {
         setSelectedCategory(categoryParam)
       }
       if (conditionParam) {
         setSelectedCondition(conditionParam)
+      }
+
+      // Set up Socket.IO for real-time listing updates
+      const socket = getSocket()
+      if (socket) {
+        socket.on('listing-update', (data: any) => {
+          console.log('📢 Received listing update:', data)
+          
+          // Update the listing in state if it exists
+          setListings((prevListings) => {
+            return prevListings.map((listing) => {
+              if (listing.id === data.listingId) {
+                return {
+                  ...listing,
+                  currentBid: data.listing.currentBid,
+                  _count: {
+                    ...listing._count,
+                    bids: data.listing._count?.bids || listing._count?.bids || 0
+                  }
+                }
+              }
+              return listing
+            })
+          })
+        })
+
+        return () => {
+          socket.off('listing-update')
+        }
       }
     }
   }, [user, isLoading, router])
@@ -129,18 +146,8 @@ export default function ListingsPage() {
     if (user) {
       fetchListings()
       fetchWishlist()
-      fetchLeaderboard()
     }
   }, [user, selectedCategory, selectedCondition, minPrice, maxPrice])
-
-  const fetchLeaderboard = async () => {
-    try {
-      const response = await api.get('/listings/leaderboard/top-bidders')
-      setLeaderboard(response.data)
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error)
-    }
-  }
 
   const fetchWishlist = async () => {
     try {
@@ -155,7 +162,7 @@ export default function ListingsPage() {
   const toggleWishlist = async (listingId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     try {
       if (wishlistItems.has(listingId)) {
         await api.delete(`/wishlist/${listingId}`)
@@ -204,14 +211,14 @@ export default function ListingsPage() {
         const response = await api.post('/listings/nlp-search', {
           query: searchQuery
         })
-        
+
         // Apply manual filters on top of NLP results if user has set them
         const manualFilters: any = {}
         if (selectedCategory) manualFilters.category = selectedCategory
         if (selectedCondition) manualFilters.condition = selectedCondition
         if (minPrice) manualFilters.minPrice = parseFloat(minPrice)
         if (maxPrice) manualFilters.maxPrice = parseFloat(maxPrice)
-        
+
         // Filter the NLP results with manual filters
         let filteredListings = response.data.listings
         if (Object.keys(manualFilters).length > 0) {
@@ -223,10 +230,10 @@ export default function ListingsPage() {
             return true
           })
         }
-        
+
         setListings(filteredListings)
         setExtractedFilters(response.data.extractedFilters)
-        
+
         // Show message if NLP failed
         if (response.data.fallbackUsed) {
           setNlpFailed(true)
@@ -475,68 +482,6 @@ export default function ListingsPage() {
               </form>
             </div>
 
-            {/* Leaderboard Toggle Button */}
-            <div className="mb-4 flex justify-end">
-              <button
-                onClick={() => setShowLeaderboard(!showLeaderboard)}
-                className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-lg hover:from-yellow-500 hover:to-orange-600 font-semibold shadow-md flex items-center space-x-2"
-              >
-                <span>🏆</span>
-                <span>{showLeaderboard ? 'Hide' : 'Show'} Top Bidders</span>
-              </button>
-            </div>
-
-            {/* Leaderboard */}
-            {showLeaderboard && leaderboard.length > 0 && (
-              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 mb-6 border-2 border-yellow-300 shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-                  <span className="text-3xl mr-2">🏆</span>
-                  Top 10 Bidding Leaderboard
-                </h3>
-                <div className="space-y-2">
-                  {leaderboard.map((entry, index) => (
-                    <div
-                      key={entry.bidder.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        index === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-300 border-2 border-yellow-400' :
-                        index === 1 ? 'bg-gradient-to-r from-gray-200 to-gray-300 border-2 border-gray-400' :
-                        index === 2 ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-2 border-orange-400' :
-                        'bg-white border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className={`text-2xl font-bold ${
-                          index === 0 ? 'text-yellow-600' :
-                          index === 1 ? 'text-gray-600' :
-                          index === 2 ? 'text-orange-600' :
-                          'text-gray-500'
-                        }`}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                        </span>
-                        <div>
-                          <div className="font-semibold text-gray-900">{entry.bidder.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {entry.totalBids} bid{entry.totalBids !== 1 ? 's' : ''}
-                            {entry.bidder.rating && (
-                              <span className="ml-2">
-                                ⭐ {entry.bidder.rating.toFixed(1)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-green-600">
-                          ${entry.totalBidAmount.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-500">Total Bid Amount</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Listings Grid */}
             {loading ? (
               <div className="flex justify-center py-12">
@@ -559,19 +504,9 @@ export default function ListingsPage() {
                   const hasBids = listing._count && listing._count.bids > 0
 
                   return (
-                    <div 
-                      key={listing.id} 
-                      className={`bg-white rounded-lg shadow hover:shadow-lg transition-all overflow-hidden ${
-                        hasBids ? 'animate-shine-border' : ''
-                      }`}
-                      style={hasBids ? {
-                        boxShadow: '0 0 20px rgba(251, 191, 36, 0.5)',
-                        border: '2px solid transparent',
-                        backgroundImage: 'linear-gradient(white, white), linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24)',
-                        backgroundOrigin: 'border-box',
-                        backgroundClip: 'padding-box, border-box',
-                        animation: 'shine 3s linear infinite'
-                      } : {}}
+                    <div
+                      key={listing.id}
+                      className={`bg-white rounded-lg shadow hover:shadow-lg transition-all ${hasBids ? 'animate-shine-border' : ''}`}
                     >
                       {/* Image Section */}
                       <div className="relative h-48 bg-gray-100">
@@ -608,10 +543,10 @@ export default function ListingsPage() {
                           className="absolute top-3 left-3 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform z-10"
                           title={wishlistItems.has(listing.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                          <svg 
-                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} 
+                          <svg
+                            className={`w-5 h-5 ${wishlistItems.has(listing.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
                             fill={wishlistItems.has(listing.id) ? 'currentColor' : 'none'}
-                            stroke="currentColor" 
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -621,8 +556,8 @@ export default function ListingsPage() {
                         {/* Listing Type Badge */}
                         <div className="absolute top-3 right-3">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full backdrop-blur-sm ${listing.type === 'AUCTION'
-                              ? 'bg-orange-100/90 text-orange-800'
-                              : 'bg-green-100/90 text-green-800'
+                            ? 'bg-orange-100/90 text-orange-800'
+                            : 'bg-green-100/90 text-green-800'
                             }`}>
                             {listing.type === 'AUCTION' ? 'Auction' : 'Direct Sale'}
                           </span>
@@ -692,7 +627,7 @@ export default function ListingsPage() {
                             href={`/marketplace/listings/${listing.id}`}
                             className="flex-1 bg-umass-maroon text-white text-center py-2 px-3 rounded-md hover:bg-red-800 transition-colors text-sm font-medium"
                           >
-                            {listing.type === 'AUCTION' ? 'Place Bid' : 'View Details'}
+                            {listing.type === 'AUCTION' && listing.seller.id !== user.id ? 'Place Bid' : 'View Details'}
                           </Link>
                           {listing.seller.id !== user.id && (
                             <Link
