@@ -69,6 +69,7 @@ model User {
   receivedReviews Review[]  @relation("ReviewReceiver")
   reports         Report[]
   wishlists       Wishlist[]
+  notifications   Notification[]
 
   @@map("users")
 }
@@ -169,4 +170,18 @@ model Wishlist {
 
   @@unique([userId, listingId])
   @@map("wishlists")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // 'LISTING_SOLD', 'LISTING_CANCELLED', 'BID_OUTBID', etc.
+  listingId String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
 }

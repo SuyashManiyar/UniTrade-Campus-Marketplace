@@ -323,7 +323,7 @@ export default function ListingDetail() {
                 title="Edit Profile"
               >
                 👤 Profile
-              </Link>
+              </Link> ̰
             </div>
           </div>
         </div>
