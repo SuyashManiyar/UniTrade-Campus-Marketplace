@@ -37,12 +37,35 @@ interface Listing {
   }
 }
 
+interface Report {
+  id: string
+  reason: string
+  details: string | null
+  createdAt: string
+  reporter: {
+    id: string
+    name: string
+    email: string
+  }
+  listing: {
+    id: string
+    title: string
+    status: string
+    seller: {
+      id: string
+      name: string
+      email: string
+    }
+  }
+}
+
 export default function AdminDashboard() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'reports'>('overview')
   const [users, setUsers] = useState<User[]>([])
   const [listings, setListings] = useState<Listing[]>([])
+  const [reports, setReports] = useState<Report[]>([])
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalListings: 0,
@@ -74,6 +97,10 @@ export default function AdminDashboard() {
       const listingsResponse = await api.get('/admin/listings')
       setListings(listingsResponse.data.listings)
       
+      // Fetch reports
+      const reportsResponse = await api.get('/reports')
+      setReports(reportsResponse.data)
+      
     } catch (error) {
       toast.error('Failed to fetch admin data')
       console.error('Error fetching admin data:', error)
@@ -89,6 +116,16 @@ export default function AdminDashboard() {
       fetchData() // Refresh data
     } catch (error) {
       toast.error('Failed to update listing status')
+    }
+  }
+
+  const deleteReport = async (reportId: string) => {
+    try {
+      await api.delete(`/reports/${reportId}`)
+      toast.success('Report dismissed')
+      fetchData()
+    } catch (error) {
+      toast.error('Failed to delete report')
     }
   }
 
@@ -122,7 +159,7 @@ export default function AdminDashboard() {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
               <Link href="/marketplace" className="text-xl font-bold text-umass-maroon">
-                UMass Marketplace
+                UniTrade
               </Link>
               <span className="text-red-600 font-medium">Admin Panel</span>
             </div>
@@ -304,9 +341,143 @@ export default function AdminDashboard() {
                 <div className="bg-white shadow rounded-lg">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-medium text-gray-900">Reports & Moderation</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Reporting system coming soon. Users will be able to report inappropriate listings and behavior.
-                    </p>
+                    <p className="text-sm text-gray-500 mt-1">Review and manage user-reported listings</p>
+                  </div>
+
+                  {/* Alert Summary */}
+                  {reports.length > 0 && (() => {
+                    const listingReports = reports.reduce((acc, report) => {
+                      acc[report.listing.id] = (acc[report.listing.id] || 0) + 1
+                      return acc
+                    }, {} as Record<string, number>)
+                    
+                    const criticalListings = Object.entries(listingReports).filter(([_, count]) => count >= 5).length
+                    const warningListings = Object.entries(listingReports).filter(([_, count]) => count >= 3 && count < 5).length
+                    
+                    if (criticalListings > 0 || warningListings > 0) {
+                      return (
+                        <div className="px-6 py-4 bg-yellow-50 border-b border-yellow-200">
+                          <div className="flex items-start">
+                            <svg className="h-5 w-5 text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <div className="ml-3">
+                              <h3 className="text-sm font-medium text-yellow-800">Action Required</h3>
+                              <div className="mt-2 text-sm text-yellow-700">
+                                {criticalListings > 0 && (
+                                  <p className="mb-1">🚨 <strong>{criticalListings}</strong> listing{criticalListings > 1 ? 's' : ''} with 5+ reports (auto-suspended)</p>
+                                )}
+                                {warningListings > 0 && (
+                                  <p>⚠️ <strong>{warningListings}</strong> listing{warningListings > 1 ? 's' : ''} with 3-4 reports (needs review)</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+
+                  <div className="overflow-x-auto">
+                    {reports.length === 0 ? (
+                      <div className="px-6 py-12 text-center">
+                        <div className="text-4xl mb-2">✅</div>
+                        <p className="text-gray-500">No reports to review</p>
+                      </div>
+                    ) : (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Listing</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reporter</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {reports.map((report) => {
+                            const listingReportCount = reports.filter(r => r.listing.id === report.listing.id).length
+                            const isHighPriority = listingReportCount >= 3
+                            
+                            return (
+                              <tr key={report.id} className={isHighPriority ? 'bg-red-50' : ''}>
+                                <td className="px-6 py-4">
+                                  <div>
+                                    <Link 
+                                      href={`/marketplace/listings/${report.listing.id}`}
+                                      className="text-sm font-medium text-umass-maroon hover:text-red-800"
+                                    >
+                                      {report.listing.title}
+                                    </Link>
+                                    <div className="text-xs text-gray-500">by {report.listing.seller.name}</div>
+                                    {listingReportCount > 1 && (
+                                      <div className="mt-1">
+                                        <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${
+                                          listingReportCount >= 5 ? 'bg-red-600 text-white' :
+                                          listingReportCount >= 3 ? 'bg-orange-500 text-white' :
+                                          'bg-yellow-400 text-gray-900'
+                                        }`}>
+                                          {listingReportCount} reports
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div>
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                      {report.reason}
+                                    </span>
+                                    {report.details && (
+                                      <div className="text-xs text-gray-600 mt-1 max-w-xs">{report.details}</div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-gray-900">{report.reporter.name}</div>
+                                  <div className="text-xs text-gray-500">{report.reporter.email}</div>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                  {new Date(report.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 text-sm space-x-2">
+                                  <Link
+                                    href={`/marketplace/listings/${report.listing.id}`}
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    View
+                                  </Link>
+                                  <button
+                                    onClick={() => deleteReport(report.id)}
+                                    className="text-gray-600 hover:text-gray-800"
+                                  >
+                                    Dismiss
+                                  </button>
+                                  {report.listing.status === 'UNDER_REVIEW' && listingReportCount > 1 && (
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await api.post(`/reports/dismiss-all/${report.listing.id}`)
+                                          toast.success('All reports dismissed and listing restored')
+                                          fetchData()
+                                        } catch (error) {
+                                          toast.error('Failed to restore listing')
+                                        }
+                                      }}
+                                      className="text-green-600 hover:text-green-800 font-medium"
+                                    >
+                                      Restore
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               )}

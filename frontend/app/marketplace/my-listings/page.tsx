@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import NotificationBell from '@/components/NotificationBell'
 
 interface Listing {
   id: string
@@ -338,6 +339,7 @@ export default function MyListings() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
+              <NotificationBell />
               <Link
                 href="/profile"
                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"

@@ -62,6 +62,10 @@ export default function ListingDetail() {
   const [submittingBid, setSubmittingBid] = useState(false)
   const [showBidLeaderboard, setShowBidLeaderboard] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
   const [selectedBidder, setSelectedBidder] = useState<any>(null)
   const [bidderProfile, setBidderProfile] = useState<any>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
@@ -275,9 +279,15 @@ export default function ListingDetail() {
 
   const getMinimumBid = () => {
     if (!listing) return 0
-    const currentBid = listing.currentBid || listing.startingBid || 0
-    const increment = listing.bidIncrement || 1
-    return currentBid + increment
+
+    // If there's already a bid, minimum is current bid + increment
+    if (listing.currentBid) {
+      const increment = listing.bidIncrement || 1
+      return listing.currentBid + increment
+    }
+
+    // If no bids yet, minimum is the starting bid
+    return listing.startingBid || 0
   }
 
   if (isLoading || loading) {
@@ -323,7 +333,7 @@ export default function ListingDetail() {
                 title="Edit Profile"
               >
                 👤 Profile
-              </Link>
+              </Link> ̰
             </div>
           </div>
         </div>
@@ -808,7 +818,7 @@ export default function ListingDetail() {
                   {/* Report Listing - Only show for ACTIVE listings */}
                   {!isOwner && listing.status === 'ACTIVE' && (
                     <button
-                      onClick={() => toast.error('Report feature coming soon!')}
+                      onClick={() => setShowReportModal(true)}
                       className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-center hover:bg-gray-200 focus:outline-none text-sm font-medium"
                     >
                       🚩 Report Listing
@@ -1001,6 +1011,99 @@ export default function ListingDetail() {
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-3xl font-bold text-umass-maroon mb-2">Bid Placed!</h2>
             <p className="text-gray-600 text-lg">Your bid has been successfully placed</p>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Report Listing</h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!reportReason) {
+                toast.error('Please select a reason')
+                return
+              }
+              try {
+                setSubmittingReport(true)
+                await api.post('/reports', {
+                  listingId: listing!.id,
+                  reason: reportReason,
+                  details: reportDetails || null
+                })
+                toast.success('Report submitted. Our team will review it.')
+                setShowReportModal(false)
+                setReportReason('')
+                setReportDetails('')
+              } catch (error: any) {
+                toast.error(error.response?.data?.error || 'Failed to submit report')
+              } finally {
+                setSubmittingReport(false)
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for reporting *
+                </label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  required
+                >
+                  <option value="">Select a reason</option>
+                  <option value="SPAM">Spam or misleading</option>
+                  <option value="INAPPROPRIATE">Inappropriate content</option>
+                  <option value="SCAM">Suspected scam</option>
+                  <option value="PROHIBITED">Prohibited item</option>
+                  <option value="DUPLICATE">Duplicate listing</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional details (optional)
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows={4}
+                  placeholder="Please provide any additional information..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReport}
+                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

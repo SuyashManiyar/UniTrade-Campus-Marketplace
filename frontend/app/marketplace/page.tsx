@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { getSocket } from '@/lib/socket'
+import NotificationBell from '@/components/NotificationBell'
 
 interface Listing {
   id: string
@@ -198,6 +199,7 @@ export default function Marketplace() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700 hidden md:block">{user.name}</span>
+              <NotificationBell />
               <Link
                 href="/profile"
                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
@@ -230,39 +232,55 @@ export default function Marketplace() {
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 Welcome to UniTrade
               </h1>
-              <p className="text-xl mb-8 text-red-50">
+              <p className="text-xl mb-3 text-red-50">
                 Buy, sell, and trade with fellow UMass students in a trusted community.
+              </p>
+              <p className="text-lg mb-8 text-red-100">
+                Save money, support your peers, and skip the shipping costs.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/marketplace/listings"
                   className="bg-white text-umass-maroon px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
                 >
-                  Browse Listings
+                  Start Shopping Now
                 </Link>
                 <Link
                   href="/marketplace/create-listing"
                   className="bg-transparent text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors border-2 border-white"
                 >
-                  Sell an Item
+                  Post Your Item (It's Free!)
                 </Link>
               </div>
 
-              {/* Stats */}
-              <div className="mt-10 grid grid-cols-3 gap-6">
-                <div>
-                  <div className="text-3xl font-bold">{stats.total}</div>
-                  <div className="text-red-100 text-sm">Total Listings</div>
+              {/* Stats - Only show if we have listings */}
+              {stats.total > 0 ? (
+                <div className="mt-10 grid grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-3xl font-bold">{stats.total}+</div>
+                    <div className="text-red-100 text-sm">Items Available</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">{stats.active}</div>
+                    <div className="text-red-100 text-sm">Active Sellers</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">100%</div>
+                    <div className="text-red-100 text-sm">Verified UMass IDs</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">{stats.active}</div>
-                  <div className="text-red-100 text-sm">Active Now</div>
+              ) : (
+                <div className="mt-10 grid grid-cols-2 gap-8">
+                  <div>
+                    <div className="text-3xl font-bold">100%</div>
+                    <div className="text-red-100 text-sm">Verified UMass Students</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">Secure</div>
+                    <div className="text-red-100 text-sm">Shop with Confidence</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">100%</div>
-                  <div className="text-red-100 text-sm">Verified Students</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -289,7 +307,10 @@ export default function Marketplace() {
         {/* Recent Listings */}
         <div className="px-4 mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recent Listings</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Student Favorites</h2>
+              <p className="text-gray-600 text-sm mt-1">Fresh deals from your UMass community</p>
+            </div>
             <Link href="/marketplace/listings" className="text-umass-maroon hover:text-red-800 font-medium">
               View All →
             </Link>
