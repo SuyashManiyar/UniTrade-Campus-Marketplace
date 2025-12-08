@@ -164,14 +164,18 @@ router.get('/', async (req, res) => {
     // Build where clause
     const where: any = {};
 
-    // Status filter - if not specified, show all statuses
+    // Status filter - exclude UNDER_REVIEW from public view
     if (status && typeof status === 'string') {
       const validStatuses = ['ACTIVE', 'SOLD', 'EXPIRED', 'CANCELLED'];
       if (validStatuses.includes(status.toUpperCase())) {
         where.status = status.toUpperCase();
       }
+    } else {
+      // If no status specified, show all EXCEPT UNDER_REVIEW
+      where.status = {
+        not: 'UNDER_REVIEW'
+      };
     }
-    // If no status specified, don't filter by status (show all)
 
     // Simple search functionality (SQLite compatible)
     if (search && typeof search === 'string' && search.trim().length > 0) {

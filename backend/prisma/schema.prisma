@@ -43,6 +43,7 @@ enum ListingStatus {
   SOLD
   EXPIRED
   CANCELLED
+  UNDER_REVIEW
 }
 
 model User {
