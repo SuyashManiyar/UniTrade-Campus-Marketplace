@@ -630,13 +630,6 @@ export default function ListingsPage() {
                             </span>
                           )}
                         </div>
-
-                        {/* Price Badge */}
-                        <div className="absolute bottom-3 left-3">
-                          <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-lg font-bold text-umass-maroon">
-                            ${listing.price}
-                          </span>
-                        </div>
                       </div>
 
                       {/* Content Section */}
