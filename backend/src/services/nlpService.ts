@@ -67,8 +67,10 @@ class NLPService {
 
     if (!this.isEnabled || !this.model) {
       console.log('⚠️  [NLP] Service not enabled, using fallback');
+      // Split query into individual words for better fallback search
+      const keywords = query.trim().toLowerCase().split(/\s+/).filter(k => k.length > 0);
       return {
-        keywords: [query.trim()],
+        keywords,
         confidence: 0
       };
     }
@@ -116,9 +118,10 @@ class NLPService {
       }
       console.log('🔄 [NLP] Falling back to keyword search');
       
-      // Fallback: return query as keywords
+      // Fallback: split query into individual words for better search
+      const keywords = query.trim().toLowerCase().split(/\s+/).filter(k => k.length > 0);
       return {
-        keywords: [query.trim()],
+        keywords,
         confidence: 0
       };
     }
