@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { getSocket } from '@/lib/socket'
+import NotificationBell from '@/components/NotificationBell'
 
 interface Listing {
   id: string
@@ -42,7 +43,7 @@ export default function Marketplace() {
       if (socket) {
         socket.on('listing-update', (data: any) => {
           console.log('📢 Received listing update:', data)
-          
+
           // Update the listing in state if it exists
           setRecentListings((prevListings) => {
             return prevListings.map((listing) => {
@@ -198,6 +199,14 @@ export default function Marketplace() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700 hidden md:block">{user.name}</span>
+              <NotificationBell />
+              <Link
+                href="/profile"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                title="Edit Profile"
+              >
+                👤 Profile
+              </Link>
               <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-5 py-2 rounded-lg hover:bg-red-800 font-medium shadow-md hover:shadow-lg transition-all"

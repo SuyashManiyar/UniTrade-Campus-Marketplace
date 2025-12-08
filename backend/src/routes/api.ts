@@ -7,13 +7,14 @@ import adminRoutes from './admin';
 import devRoutes from './dev';
 import wishlistRoutes from './wishlist';
 import reportRoutes from './reports';
+import notificationRoutes from './notifications';
 
 const router = Router();
 
 // Health check
 router.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'UMass Marketplace API is working!',
     timestamp: new Date().toISOString()
   });
@@ -28,5 +29,6 @@ router.use('/admin', adminRoutes);
 router.use('/dev', devRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/reports', reportRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

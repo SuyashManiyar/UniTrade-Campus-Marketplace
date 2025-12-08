@@ -17,12 +17,12 @@ export default function SimpleRegister() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email.endsWith('@umass.edu')) {
       toast.error('Please use a UMass email address')
       return
     }
-    
+
     if (!name.trim()) {
       toast.error('Name is required')
       return
@@ -42,7 +42,7 @@ export default function SimpleRegister() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (code.length !== 6) {
       toast.error('Please enter a 6-digit code')
       return
@@ -91,7 +91,7 @@ export default function SimpleRegister() {
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="Enter 6-digit code"
                   maxLength={6}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
                 />
               </div>
 
@@ -133,7 +133,7 @@ export default function SimpleRegister() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your-name@umass.edu"
                 required
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
               />
             </div>
 
@@ -147,7 +147,7 @@ export default function SimpleRegister() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your full name"
                 required
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-umass-maroon focus:border-umass-maroon"
               />
             </div>
 

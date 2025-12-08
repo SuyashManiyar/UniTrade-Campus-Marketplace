@@ -532,9 +532,50 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res) => 
             rating: true,
             ratingCount: true
           }
+        },
+        bids: {
+          select: {
+            bidderId: true,
+            bidder: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
         }
       }
     });
+
+    // Send notifications to bidders if status changed to SOLD or CANCELLED
+    if ((status === 'SOLD' || status === 'CANCELLED') && listing.bids.length > 0) {
+      const uniqueBidders = Array.from(new Set(listing.bids.map(bid => bid.bidderId)));
+
+      const notificationTitle = status === 'SOLD'
+        ? 'Item Sold'
+        : 'Listing Cancelled';
+
+      const notificationMessage = status === 'SOLD'
+        ? `The item "${listing.title}" you bid on has been sold.`
+        : `The listing "${listing.title}" you bid on has been cancelled by the seller.`;
+
+      // Create notifications for all bidders
+      await Promise.all(
+        uniqueBidders.map(bidderId =>
+          prisma.notification.create({
+            data: {
+              userId: bidderId,
+              title: notificationTitle,
+              message: notificationMessage,
+              type: status === 'SOLD' ? 'LISTING_SOLD' : 'LISTING_CANCELLED',
+              listingId: id
+            }
+          })
+        )
+      );
+
+      console.log(`📢 Sent ${status} notifications to ${uniqueBidders.length} bidders for listing: ${listing.title}`);
+    }
 
     res.json({
       message: `Listing marked as ${status}`,
@@ -554,7 +595,14 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     // Check if listing exists and belongs to user
     const existingListing = await prisma.listing.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        bids: {
+          select: {
+            bidderId: true
+          }
+        }
+      }
     });
 
     if (!existingListing) {
@@ -565,10 +613,33 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Not authorized to delete this listing' });
     }
 
-    await prisma.listing.update({
+    // Update listing status to CANCELLED
+    const listing = await prisma.listing.update({
       where: { id },
       data: { status: 'CANCELLED' }
     });
+
+    // Send notifications to bidders
+    if (existingListing.bids.length > 0) {
+      const uniqueBidders = Array.from(new Set(existingListing.bids.map(bid => bid.bidderId)));
+
+      // Create notifications for all bidders
+      await Promise.all(
+        uniqueBidders.map(bidderId =>
+          prisma.notification.create({
+            data: {
+              userId: bidderId,
+              title: '❌ Listing Cancelled',
+              message: `The listing "${existingListing.title}" you bid on has been cancelled by the seller.`,
+              type: 'LISTING_CANCELLED',
+              listingId: id
+            }
+          })
+        )
+      );
+
+      console.log(`📢 Sent CANCELLED notifications to ${uniqueBidders.length} bidders for listing: ${existingListing.title}`);
+    }
 
     res.json({ message: 'Listing cancelled successfully' });
   } catch (error) {

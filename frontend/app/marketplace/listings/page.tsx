@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { getSocket } from '@/lib/socket'
+import NotificationBell from '@/components/NotificationBell'
 
 interface Listing {
   id: string
@@ -117,7 +118,7 @@ export default function ListingsPage() {
       if (socket) {
         socket.on('listing-update', (data: any) => {
           console.log('📢 Received listing update:', data)
-          
+
           // Update the listing in state if it exists
           setListings((prevListings) => {
             return prevListings.map((listing) => {
@@ -315,9 +316,12 @@ export default function ListingsPage() {
               <Link href="/marketplace" className="text-xl font-bold text-umass-maroon">
                 UniTrade
               </Link>
-              <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium">
+              <button
+                onClick={clearFilters}
+                className="text-gray-700 hover:text-umass-maroon font-medium"
+              >
                 Browse Listings
-              </Link>
+              </button>
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon">
                 My Listings
               </Link>
@@ -335,6 +339,14 @@ export default function ListingsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user.name}!</span>
+              <NotificationBell />
+              <Link
+                href="/profile"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                title="Edit Profile"
+              >
+                👤 Profile
+              </Link>
               <Link
                 href="/marketplace/create-listing"
                 className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
