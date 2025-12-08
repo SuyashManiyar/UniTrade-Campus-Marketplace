@@ -279,9 +279,15 @@ export default function ListingDetail() {
 
   const getMinimumBid = () => {
     if (!listing) return 0
-    const currentBid = listing.currentBid || listing.startingBid || 0
-    const increment = listing.bidIncrement || 1
-    return currentBid + increment
+
+    // If there's already a bid, minimum is current bid + increment
+    if (listing.currentBid) {
+      const increment = listing.bidIncrement || 1
+      return listing.currentBid + increment
+    }
+
+    // If no bids yet, minimum is the starting bid
+    return listing.startingBid || 0
   }
 
   if (isLoading || loading) {
