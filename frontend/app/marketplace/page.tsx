@@ -180,7 +180,7 @@ export default function Marketplace() {
                 UniTrade
               </Link>
               <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon font-medium transition-colors">
-                Browse
+                Browse Listings
               </Link>
               <Link href="/marketplace/my-listings" className="text-gray-700 hover:text-umass-maroon transition-colors">
                 My Listings
@@ -233,7 +233,7 @@ export default function Marketplace() {
                 Welcome to UniTrade
               </h1>
               <p className="text-xl mb-3 text-red-50">
-                Buy, sell, and trade with fellow UMass students in a trusted community.
+                Buy, sell, and trade with fellow UMass community in a trusted community.
               </p>
               <p className="text-lg mb-8 text-red-100">
                 Save money, support your peers, and skip the shipping costs.
@@ -273,7 +273,7 @@ export default function Marketplace() {
                 <div className="mt-10 grid grid-cols-2 gap-8">
                   <div>
                     <div className="text-3xl font-bold">100%</div>
-                    <div className="text-red-100 text-sm">Verified UMass Students</div>
+                    <div className="text-red-100 text-sm">Verified UMass Community</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold">Secure</div>
