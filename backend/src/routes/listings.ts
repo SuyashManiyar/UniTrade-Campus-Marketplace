@@ -254,6 +254,10 @@ router.get('/', async (req, res) => {
       case 'title':
         orderBy = { title: 'asc' };
         break;
+      case 'popular':
+        // Sort by wishlist count (most wishlisted first)
+        orderBy = { wishlists: { _count: 'desc' } };
+        break;
       case 'newest':
       default:
         orderBy = { createdAt: 'desc' };
@@ -284,7 +288,10 @@ router.get('/', async (req, res) => {
             }
           },
           _count: {
-            select: { bids: true }
+            select: { 
+              bids: true,
+              wishlists: true
+            }
           }
         },
         orderBy,

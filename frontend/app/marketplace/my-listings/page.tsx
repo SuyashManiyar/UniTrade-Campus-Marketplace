@@ -330,7 +330,7 @@ export default function MyListings() {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
               <Link href="/marketplace" className="text-xl font-bold text-umass-maroon">
-                UMass Marketplace
+                UniTrade
               </Link>
               <Link href="/marketplace/listings" className="text-gray-700 hover:text-umass-maroon">
                 Browse Listings

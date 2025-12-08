@@ -11,7 +11,14 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const userId = req.user!.id
 
     const wishlistItems = await prisma.wishlist.findMany({
-      where: { userId },
+      where: { 
+        userId,
+        listing: {
+          status: {
+            notIn: ['SOLD', 'CANCELLED', 'EXPIRED']
+          }
+        }
+      },
       include: {
         listing: {
           include: {

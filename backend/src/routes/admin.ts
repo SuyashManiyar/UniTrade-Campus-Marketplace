@@ -16,17 +16,18 @@ const requireAdmin = (req: AuthRequest, res: any, next: any) => {
 // Get admin dashboard stats
 router.get('/stats', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const [userCount, listingCount, activeListingCount] = await Promise.all([
+    const [userCount, listingCount, activeListingCount, reportCount] = await Promise.all([
       prisma.user.count(),
       prisma.listing.count(),
-      prisma.listing.count({ where: { status: 'ACTIVE' } })
+      prisma.listing.count({ where: { status: 'ACTIVE' } }),
+      prisma.report.count()
     ]);
 
     res.json({
       totalUsers: userCount,
       totalListings: listingCount,
       activeListings: activeListingCount,
-      totalReports: 0 // TODO: Implement reports
+      totalReports: reportCount
     });
   } catch (error) {
     console.error('Get admin stats error:', error);
@@ -177,6 +178,27 @@ router.put('/listings/:id/status', authenticateToken, requireAdmin, async (req: 
   } catch (error) {
     console.error('Update listing status error:', error);
     res.status(500).json({ error: 'Failed to update listing status' });
+  }
+});
+
+// Delete listing permanently (admin only)
+router.delete('/listings/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    // Delete related records first (due to foreign key constraints)
+    await prisma.$transaction([
+      prisma.wishlist.deleteMany({ where: { listingId: id } }),
+      prisma.report.deleteMany({ where: { listingId: id } }),
+      prisma.message.deleteMany({ where: { listingId: id } }),
+      prisma.bid.deleteMany({ where: { listingId: id } }),
+      prisma.listing.delete({ where: { id } })
+    ]);
+
+    res.json({ message: 'Listing deleted successfully' });
+  } catch (error) {
+    console.error('Delete listing error:', error);
+    res.status(500).json({ error: 'Failed to delete listing' });
   }
 });
 
