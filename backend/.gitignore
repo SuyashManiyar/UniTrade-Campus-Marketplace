@@ -3,3 +3,11 @@ node_modules
 .env
 
 /src/generated/prisma
+
+# Uploaded images
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
