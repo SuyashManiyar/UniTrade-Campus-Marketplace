@@ -55,3 +55,8 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+
+# Uploaded images
+backend/uploads/
+frontend/public/uploads/
+uploads/

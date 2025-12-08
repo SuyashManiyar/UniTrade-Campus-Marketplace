@@ -234,14 +234,8 @@ export default function WishlistPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-500 mb-4">
                         <span>by {item.listing.seller.name}</span>
-                        {item.listing.seller.rating && (
-                          <div className="flex items-center">
-                            <span className="text-yellow-400 mr-1">★</span>
-                            <span>{item.listing.seller.rating.toFixed(1)}</span>
-                          </div>
-                        )}
                       </div>
 
                       <Link

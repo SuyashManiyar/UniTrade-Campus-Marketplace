@@ -711,20 +711,6 @@ export default function ListingDetail() {
                         <span className="text-gray-600 ml-2 text-sm">({listing.seller.pronouns})</span>
                       )}
                     </div>
-                    {listing.seller.rating && (
-                      <div className="flex items-center bg-white rounded-md px-3 py-2 border border-yellow-200">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-lg ${i < Math.round(listing.seller.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-700 ml-2 font-medium">
-                          {listing.seller.rating.toFixed(1)} ({listing.seller.ratingCount})
-                        </span>
-                      </div>
-                    )}
                     {listing.seller.major && (
                       <div className="flex items-center text-sm text-gray-700">
                         <span className="mr-2">🎓</span>
@@ -920,20 +906,6 @@ export default function ListingDetail() {
                       <h3 className="text-2xl font-bold text-gray-900">{bidderProfile.name}</h3>
                       {bidderProfile.pronouns && (
                         <p className="text-gray-600">({bidderProfile.pronouns})</p>
-                      )}
-                      {bidderProfile.rating && (
-                        <div className="flex items-center mt-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <span key={i} className={`text-lg ${i < Math.round(bidderProfile.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-700 ml-2">
-                            {bidderProfile.rating.toFixed(1)} ({bidderProfile.ratingCount} reviews)
-                          </span>
-                        </div>
                       )}
                     </div>
                   </div>

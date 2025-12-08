@@ -337,25 +337,25 @@ export default function ListingsPage() {
                 </Link>
               )}
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.name}!</span>
+            <div className="flex items-center space-x-3">
               <NotificationBell />
               <Link
                 href="/profile"
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
-                title="Edit Profile"
+                className="text-gray-600 hover:text-umass-maroon transition-colors"
+                title="Profile"
               >
-                👤 Profile
+                👤
               </Link>
               <Link
                 href="/marketplace/create-listing"
-                className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800"
+                className="bg-umass-maroon text-white px-4 py-2 rounded-md hover:bg-red-800 transition-colors"
               >
                 Post Item
               </Link>
+              <span className="text-gray-600 text-sm hidden lg:block">{user.name}</span>
               <button
                 onClick={logout}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                className="text-gray-600 hover:text-red-600 transition-colors text-sm"
               >
                 Logout
               </button>
@@ -639,14 +639,8 @@ export default function ListingsPage() {
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                        <div className="text-sm text-gray-500 mb-4">
                           <span>by {listing.seller.name}</span>
-                          {listing.seller.rating && (
-                            <div className="flex items-center">
-                              <span className="text-yellow-400 mr-1">★</span>
-                              <span>{listing.seller.rating.toFixed(1)}</span>
-                            </div>
-                          )}
                         </div>
 
                         {/* Bid Info for Auctions */}

@@ -101,6 +101,11 @@ export default function AdminDashboard() {
       const reportsResponse = await api.get('/reports')
       setReports(reportsResponse.data)
       
+      // Fetch users
+      const usersResponse = await api.get('/admin/users')
+      console.log('Users response:', usersResponse.data)
+      setUsers(usersResponse.data.users || [])
+      
     } catch (error) {
       toast.error('Failed to fetch admin data')
       console.error('Error fetching admin data:', error)
@@ -116,6 +121,20 @@ export default function AdminDashboard() {
       fetchData() // Refresh data
     } catch (error) {
       toast.error('Failed to update listing status')
+    }
+  }
+
+  const deleteListing = async (listingId: string, listingTitle: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${listingTitle}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      await api.delete(`/admin/listings/${listingId}`)
+      toast.success('Listing deleted permanently')
+      fetchData() // Refresh data
+    } catch (error) {
+      toast.error('Failed to delete listing')
     }
   }
 
@@ -154,26 +173,27 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow">
+      <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link href="/marketplace" className="text-xl font-bold text-umass-maroon">
+            <div className="flex items-center space-x-4">
+              <Link href="/marketplace" className="text-2xl font-bold text-umass-maroon">
                 UniTrade
               </Link>
-              <span className="text-red-600 font-medium">Admin Panel</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-red-600 font-semibold">Admin Panel</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Admin: {user.name}</span>
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-600 text-sm hidden md:block">👤 {user.name}</span>
               <Link 
                 href="/marketplace"
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                className="text-gray-600 hover:text-umass-maroon transition-colors text-sm font-medium"
               >
-                Back to Marketplace
+                ← Marketplace
               </Link>
               <button
                 onClick={logout}
-                className="bg-red-200 text-red-700 px-4 py-2 rounded-md hover:bg-red-300"
+                className="text-gray-600 hover:text-red-600 transition-colors text-sm font-medium"
               >
                 Logout
               </button>
@@ -300,21 +320,31 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(listing.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                              <Link
-                                href={`/marketplace/listings/${listing.id}`}
-                                className="text-umass-maroon hover:text-red-800"
-                              >
-                                View
-                              </Link>
-                              {listing.status === 'ACTIVE' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex flex-col gap-1">
+                                <div className="space-x-2">
+                                  <Link
+                                    href={`/marketplace/listings/${listing.id}`}
+                                    className="text-umass-maroon hover:text-red-800"
+                                  >
+                                    View
+                                  </Link>
+                                  {listing.status === 'ACTIVE' && (
+                                    <button
+                                      onClick={() => updateListingStatus(listing.id, 'CANCELLED')}
+                                      className="text-orange-600 hover:text-orange-900"
+                                    >
+                                      Cancel
+                                    </button>
+                                  )}
+                                </div>
                                 <button
-                                  onClick={() => updateListingStatus(listing.id, 'CANCELLED')}
-                                  className="text-red-600 hover:text-red-900"
+                                  onClick={() => deleteListing(listing.id, listing.title)}
+                                  className="text-red-600 hover:text-red-900 text-left"
                                 >
-                                  Remove
+                                  🗑️ Delete
                                 </button>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -329,9 +359,64 @@ export default function AdminDashboard() {
                 <div className="bg-white shadow rounded-lg">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-medium text-gray-900">User Management</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      User management features coming soon. For now, you can view user details through listings.
-                    </p>
+                    <p className="text-sm text-gray-500 mt-1">View and manage all registered users</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    {users.length === 0 ? (
+                      <div className="px-6 py-12 text-center">
+                        <p className="text-gray-500">No users found</p>
+                      </div>
+                    ) : (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Listings</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviews</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {users.map((user) => (
+                            <tr key={user.id}>
+                              <td className="px-6 py-4">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                  <div className="text-xs text-gray-500">{user.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                                  user.role === 'STAFF' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {user.role}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {user._count.listings}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {user._count.receivedReviews}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {new Date(user.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {user.isVerified ? 'Verified' : 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               )}

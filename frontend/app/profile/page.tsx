@@ -296,23 +296,6 @@ export default function ProfilePage() {
                                 <label className="block text-sm font-medium text-gray-600 mb-1">Role</label>
                                 <p className="text-gray-900">{user.role}</p>
                             </div>
-                            {profileData?.rating && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Rating</label>
-                                    <div className="flex items-center">
-                                        <div className="flex items-center">
-                                            {[...Array(5)].map((_, i) => (
-                                                <span key={i} className={`text-lg ${i < Math.round(profileData.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                                    ★
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <span className="text-gray-700 ml-2">
-                                            {profileData.rating.toFixed(1)} ({profileData.ratingCount} reviews)
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
