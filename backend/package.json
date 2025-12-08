@@ -9,10 +9,9 @@
     "dev": "nodemon src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "seed": "ts-node prisma/seed.ts",
-    "seed:images": "ts-node scripts/seed-with-images.ts",
-    "make-admin": "node scripts/make-admin.js",
-    "update-profiles": "ts-node scripts/update-profiles.ts"
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "seed": "ts-node prisma/seed.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

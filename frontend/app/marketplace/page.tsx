@@ -233,7 +233,7 @@ export default function Marketplace() {
                 Welcome to UniTrade
               </h1>
               <p className="text-xl mb-3 text-red-50">
-                Buy, sell, and trade with fellow UMass students in a trusted community.
+                Buy, sell, and trade with fellow UMass community in a trusted community.
               </p>
               <p className="text-lg mb-8 text-red-100">
                 Save money, support your peers, and skip the shipping costs.
@@ -273,7 +273,7 @@ export default function Marketplace() {
                 <div className="mt-10 grid grid-cols-2 gap-8">
                   <div>
                     <div className="text-3xl font-bold">100%</div>
-                    <div className="text-red-100 text-sm">Verified UMass Students</div>
+                    <div className="text-red-100 text-sm">Verified UMass Community</div>
                   </div>
                   <div>
                     <div className="text-3xl font-bold">Secure</div>
@@ -325,7 +325,7 @@ export default function Marketplace() {
                   <Link
                     key={listing.id}
                     href={`/marketplace/listings/${listing.id}`}
-                    className="group"
+                    className="group flex"
                   >
                     <div
                       className={`bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 h-full flex flex-col ${hasBids ? 'animate-shine-border' : ''}`}
@@ -366,36 +366,33 @@ export default function Marketplace() {
                       </div>
 
                       {/* Content */}
-                      <div className="p-4 flex flex-col flex-grow">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-2 mb-3 min-h-[3rem]">
-                          {listing.title}
-                        </h3>
+                      <div className="p-4 flex flex-col flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-umass-maroon transition-colors line-clamp-1">
+                            {listing.title}
+                          </h3>
+                        </div>
 
-                        {/* Bid Info for Auctions */}
-                        {listing.type === 'AUCTION' && (
-                          <div className="mb-3 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600">
-                                {listing.currentBid ? 'Current Bid' : 'Starting Bid'}
-                              </span>
-                              <span className="font-bold text-green-600">
-                                ${listing.currentBid || listing.startingBid}
-                              </span>
-                            </div>
-                            {hasBids && (
-                              <div className="text-xs text-gray-500 mt-1 flex items-center">
-                                <span className="mr-1">🔥</span>
-                                {listing._count!.bids} bid{listing._count!.bids !== 1 ? 's' : ''}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="mt-auto flex items-center justify-between">
+                        <div className="flex items-center justify-between mt-auto">
                           <span className="text-xs text-gray-500 flex items-center">
                             {getCategoryIcon(listing.category)} {listing.category.replace('_', ' ')}
                           </span>
-                          {listing.type === 'DIRECT_SALE' && (
+
+                          {listing.type === 'AUCTION' ? (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-full border border-orange-300">
+                              <span className="text-xs font-medium text-orange-800">
+                                {listing.currentBid ? 'Bid' : 'Start'}
+                              </span>
+                              <span className="text-sm font-bold text-green-700">
+                                ${listing.currentBid || listing.startingBid}
+                              </span>
+                              {hasBids && (
+                                <span className="text-xs text-orange-700">
+                                  🔥 {listing._count!.bids}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
                             <span className="text-lg font-bold text-umass-maroon">
                               ${listing.price}
                             </span>
