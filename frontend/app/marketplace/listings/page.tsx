@@ -215,20 +215,36 @@ export default function ListingsPage() {
     if (searchQuery) {
       try {
         setLoading(true)
+        console.log('🔍 Starting NLP search with query:', searchQuery)
+        
         const response = await api.post('/listings/nlp-search', {
           query: searchQuery
         })
+
+        console.log('📦 Full API Response:', response)
+        console.log('📊 Response data:', response.data)
+        console.log('📝 Listings array:', response.data?.listings)
+        console.log('📝 Listings length:', response.data?.listings?.length)
+
+        if (!response.data || !response.data.listings) {
+          console.error('❌ Invalid response structure:', response.data)
+          toast.error('Invalid response from server')
+          setLoading(false)
+          return
+        }
 
         // Apply manual filters on top of NLP results if user has set them
         const manualFilters: any = {}
         if (selectedCategory) manualFilters.category = selectedCategory
         if (selectedCondition) manualFilters.condition = selectedCondition
-        if (selectedStatus) manualFilters.status = selectedStatus
+        if (selectedStatus && selectedStatus !== 'ALL') manualFilters.status = selectedStatus
         if (minPrice) manualFilters.minPrice = parseFloat(minPrice)
         if (maxPrice) manualFilters.maxPrice = parseFloat(maxPrice)
 
         // Filter the NLP results with manual filters
-        let filteredListings = response.data.listings
+        let filteredListings = response.data.listings || []
+        console.log('🔧 Manual filters:', manualFilters)
+        
         if (Object.keys(manualFilters).length > 0) {
           filteredListings = filteredListings.filter((listing: Listing) => {
             if (manualFilters.category && listing.category !== manualFilters.category) return false
@@ -240,6 +256,9 @@ export default function ListingsPage() {
           })
         }
 
+        console.log('✅ Final filtered listings:', filteredListings)
+        console.log('✅ Final count:', filteredListings.length)
+        
         setListings(filteredListings)
         setExtractedFilters(response.data.extractedFilters)
 
@@ -249,10 +268,12 @@ export default function ListingsPage() {
           toast('Smart search unavailable, using standard search', { icon: 'ℹ️' })
         } else {
           setNlpFailed(false)
+          toast.success(`Found ${filteredListings.length} listing${filteredListings.length !== 1 ? 's' : ''}`)
         }
-      } catch (error) {
-        toast.error('Failed to fetch listings')
-        console.error('Error fetching listings:', error)
+      } catch (error: any) {
+        console.error('❌ Error in NLP search:', error)
+        console.error('❌ Error response:', error.response)
+        toast.error(error.response?.data?.error || 'Failed to fetch listings')
       } finally {
         setLoading(false)
       }
