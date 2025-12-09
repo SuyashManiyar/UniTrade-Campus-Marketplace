@@ -1,20 +1,44 @@
 'use client';
 
 import { Conversation } from '@/lib/messaging';
-import { MessageCircle, Package } from 'lucide-react';
+import { MessageCircle, Package, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface ConversationListProps {
   conversations: Conversation[];
   currentConversationKey?: string;
   showHeader?: boolean;
+  onConversationDeleted?: (listingId: string, otherUserId: string) => void;
 }
 
 export default function ConversationList({
   conversations,
   currentConversationKey,
   showHeader = true,
+  onConversationDeleted,
 }: ConversationListProps) {
+  
+  const handleDeleteConversation = async (e: React.MouseEvent, listingId: string, otherUserId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await api.delete(`/messages/conversation/${listingId}/${otherUserId}`);
+      toast.success('Conversation deleted');
+      if (onConversationDeleted) {
+        onConversationDeleted(listingId, otherUserId);
+      }
+    } catch (error) {
+      toast.error('Failed to delete conversation');
+    }
+  };
+  
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -89,50 +113,63 @@ export default function ConversationList({
               : conv.otherUserName;
 
             return (
-              <Link
+              <div
                 key={conversationKey}
-                href={`/messages/${conv.listingId}/${conv.otherUserId}`}
-                className={`block p-4 hover:bg-white transition-all duration-150 border-b border-gray-100 ${
+                className={`relative group ${
                   isActive ? 'bg-white shadow-sm border-l-4 border-l-umass-maroon' : 'bg-gray-50'
                 }`}
               >
-                <div className="flex gap-3">
-                  {/* Avatar */}
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-full ${getAvatarColor(displayName)} flex items-center justify-center text-white font-semibold text-sm shadow-sm`}>
-                    {getInitials(displayName)}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-1">
-                      <h3 className="font-semibold text-gray-900 truncate text-sm">
-                        {displayName}
-                      </h3>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                        {formatTime(conv.lastMessageTime)}
-                      </span>
+                <Link
+                  href={`/messages/${conv.listingId}/${conv.otherUserId}`}
+                  className="block p-4 hover:bg-white transition-all duration-150 border-b border-gray-100"
+                >
+                  <div className="flex gap-3">
+                    {/* Avatar */}
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-full ${getAvatarColor(displayName)} flex items-center justify-center text-white font-semibold text-sm shadow-sm`}>
+                      {getInitials(displayName)}
                     </div>
                     
-                    {conv.listingTitle && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <Package size={12} />
-                        <span className="truncate">{conv.listingTitle}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center gap-2">
-                      <p className="text-sm text-gray-600 truncate flex-1">
-                        {conv.lastMessage}
-                      </p>
-                      {conv.unreadCount > 0 && (
-                        <span className="flex-shrink-0 bg-umass-maroon text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                          {conv.unreadCount}
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <h3 className="font-semibold text-gray-900 truncate text-sm">
+                          {displayName}
+                        </h3>
+                        <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                          {formatTime(conv.lastMessageTime)}
                         </span>
+                      </div>
+                      
+                      {conv.listingTitle && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                          <Package size={12} />
+                          <span className="truncate">{conv.listingTitle}</span>
+                        </div>
                       )}
+                      
+                      <div className="flex justify-between items-center gap-2">
+                        <p className="text-sm text-gray-600 truncate flex-1">
+                          {conv.lastMessage}
+                        </p>
+                        {conv.unreadCount > 0 && (
+                          <span className="flex-shrink-0 bg-umass-maroon text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                            {conv.unreadCount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                
+                {/* Delete Button */}
+                <button
+                  onClick={(e) => handleDeleteConversation(e, conv.listingId, conv.otherUserId)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full"
+                  title="Delete conversation"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             );
           })
         )}

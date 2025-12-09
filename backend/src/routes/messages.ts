@@ -187,4 +187,28 @@ router.put('/mark-read/:conversationId', authenticateToken, async (req: AuthRequ
   }
 });
 
+// Delete conversation (all messages between two users for a specific listing)
+router.delete('/conversation/:listingId/:otherUserId', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { listingId, otherUserId } = req.params;
+
+    // Delete all messages in this conversation
+    await prisma.message.deleteMany({
+      where: {
+        listingId,
+        OR: [
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId }
+        ]
+      }
+    });
+
+    res.json({ message: 'Conversation deleted successfully' });
+  } catch (error) {
+    console.error('Delete conversation error:', error);
+    res.status(500).json({ error: 'Failed to delete conversation' });
+  }
+});
+
 export default router;

@@ -208,7 +208,18 @@ export default function MessagesPage() {
 
       <div className="max-w-7xl mx-auto p-4">
         <div className="flex h-[calc(100vh-7rem)] bg-white rounded-lg shadow-lg overflow-hidden">
-          <ConversationList conversations={conversations} showHeader={false} />
+          <ConversationList 
+            conversations={conversations} 
+            showHeader={false}
+            onConversationDeleted={(listingId, otherUserId) => {
+              // Remove the deleted conversation from state immediately
+              setConversations(prev => 
+                prev.filter(conv => 
+                  !(conv.listingId === listingId && conv.otherUserId === otherUserId)
+                )
+              );
+            }}
+          />
           <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-gray-50 to-blue-50">
             <div className="text-center p-8">
               <div className="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">

@@ -69,6 +69,7 @@ export default function ListingDetail() {
   const [selectedBidder, setSelectedBidder] = useState<any>(null)
   const [bidderProfile, setBidderProfile] = useState<any>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
+  const [isInWishlist, setIsInWishlist] = useState(false)
 
   // Helper function to get all images from images JSON
   const getAllImages = (images: string | null | undefined): string[] => {
@@ -166,11 +167,37 @@ export default function ListingDetail() {
     try {
       const response = await api.get(`/listings/${listingId}`)
       setListing(response.data)
+      checkWishlistStatus()
     } catch (error) {
       toast.error('Failed to fetch listing')
       router.push('/marketplace/listings')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const checkWishlistStatus = async () => {
+    try {
+      const response = await api.get(`/wishlist/check/${listingId}`)
+      setIsInWishlist(response.data.inWishlist)
+    } catch (error) {
+      console.error('Error checking wishlist status:', error)
+    }
+  }
+
+  const toggleWishlist = async () => {
+    try {
+      if (isInWishlist) {
+        await api.delete(`/wishlist/${listingId}`)
+        setIsInWishlist(false)
+        toast.success('Removed from wishlist')
+      } else {
+        await api.post(`/wishlist/${listingId}`)
+        setIsInWishlist(true)
+        toast.success('Added to wishlist')
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to update wishlist')
     }
   }
 
@@ -789,6 +816,20 @@ export default function ListingDetail() {
                         {submittingBid ? 'Placing Bid...' : 'Place Bid'}
                       </button>
                     </form>
+                  )}
+
+                  {/* Wishlist Button - Only show for non-owners */}
+                  {!isOwner && (
+                    <button
+                      onClick={toggleWishlist}
+                      className={`w-full py-3 px-4 rounded-lg text-center font-medium shadow-md hover:shadow-lg transition-all ${
+                        isInWishlist
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {isInWishlist ? '❤️ Remove from Wishlist' : '🤍 Add to Wishlist'}
+                    </button>
                   )}
 
                   {/* Contact Seller - Only show for ACTIVE listings */}
