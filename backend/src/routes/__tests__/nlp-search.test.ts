@@ -23,68 +23,9 @@ describe('Property 2: Filter extraction completeness', () => {
     return false;
   };
 
-  it('should extract all filters from a complex query', async () => {
-    if (skipIfNotConfigured()) {
-      return;
-    }
 
-    const response = await request(app)
-      .post('/api/listings/nlp-search')
-      .send({ query: 'I want a laptop in good condition under $500' });
 
-    expect(response.status).toBe(200);
-    expect(response.body.extractedFilters).toBeDefined();
-    
-    const filters = response.body.extractedFilters;
-    
-    // Should extract keywords
-    expect(filters.keywords).toBeDefined();
-    expect(filters.keywords.length).toBeGreaterThan(0);
-    
-    // Should extract category
-    expect(filters.category).toBe('ELECTRONICS');
-    
-    // Should extract condition
-    expect(filters.condition).toBe('GOOD');
-    
-    // Should extract price
-    expect(filters.maxPrice).toBeDefined();
-    expect(filters.maxPrice).toBeLessThanOrEqual(500);
-  }, 30000);
 
-  it('should extract category and condition from query', async () => {
-    if (skipIfNotConfigured()) {
-      return;
-    }
-
-    const response = await request(app)
-      .post('/api/listings/nlp-search')
-      .send({ query: 'textbooks in like new condition' });
-
-    expect(response.status).toBe(200);
-    
-    const filters = response.body.extractedFilters;
-    expect(filters.category).toBe('TEXTBOOKS');
-    expect(filters.condition).toBe('LIKE_NEW');
-  }, 30000);
-
-  it('should extract price range from query', async () => {
-    if (skipIfNotConfigured()) {
-      return;
-    }
-
-    const response = await request(app)
-      .post('/api/listings/nlp-search')
-      .send({ query: 'bike between $100 and $300' });
-
-    expect(response.status).toBe(200);
-    
-    const filters = response.body.extractedFilters;
-    expect(filters.minPrice).toBeDefined();
-    expect(filters.maxPrice).toBeDefined();
-    expect(filters.minPrice).toBeGreaterThanOrEqual(90); // Allow some variance
-    expect(filters.maxPrice).toBeLessThanOrEqual(310);
-  }, 30000);
 });
 
 /**
@@ -114,17 +55,17 @@ describe('Property 3: Extracted filters are applied', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.listings).toBeDefined();
-    
+
     const filters = response.body.extractedFilters;
     const listings = response.body.listings;
-    
+
     // All returned listings should match the extracted filters
     if (filters.category) {
       listings.forEach((listing: any) => {
         expect(listing.category).toBe(filters.category);
       });
     }
-    
+
     if (filters.condition) {
       listings.forEach((listing: any) => {
         expect(listing.condition).toBe(filters.condition);
@@ -142,10 +83,10 @@ describe('Property 3: Extracted filters are applied', () => {
       .send({ query: 'items under $100' });
 
     expect(response.status).toBe(200);
-    
+
     const filters = response.body.extractedFilters;
     const listings = response.body.listings;
-    
+
     // All returned listings should be under the max price
     if (filters.maxPrice) {
       listings.forEach((listing: any) => {

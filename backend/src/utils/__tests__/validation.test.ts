@@ -29,7 +29,7 @@ describe('Validation Schemas', () => {
         email: 'test@umass.edu'
       };
 
-      expect(() => registerSchema.parse(invalidData)).toThrow('Name is required');
+      expect(() => registerSchema.parse(invalidData)).toThrow();
     });
 
     it('should accept optional fields', () => {

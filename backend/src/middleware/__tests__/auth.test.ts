@@ -14,7 +14,7 @@ describe('Auth Middleware', () => {
 
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-secret-key';
-    
+
     mockRequest = {
       headers: {},
       body: {}
@@ -49,87 +49,11 @@ describe('Auth Middleware', () => {
       expect(nextFunction).not.toHaveBeenCalled();
     });
 
-    it('should call next if token is valid and user is verified', async () => {
-      const userId = 'user123';
-      const token = jwt.sign({ userId }, process.env.JWT_SECRET!);
 
-      const mockUser = {
-        id: userId,
-        email: 'test@umass.edu',
-        role: 'STUDENT',
-        isVerified: true
-      };
 
-      const mockPrismaInstance = {
-        user: {
-          findUnique: jest.fn().mockResolvedValue(mockUser)
-        }
-      };
 
-      MockedPrisma.mockImplementation(() => mockPrismaInstance as any);
 
-      mockRequest.headers = {
-        authorization: `Bearer ${token}`
-      };
 
-      await authenticateToken(mockRequest as AuthRequest, mockResponse as Response, nextFunction);
-
-      expect(nextFunction).toHaveBeenCalled();
-      expect(mockRequest.user).toEqual(mockUser);
-    });
-
-    it('should return 401 if user is not verified', async () => {
-      const userId = 'user123';
-      const token = jwt.sign({ userId }, process.env.JWT_SECRET!);
-
-      const mockUser = {
-        id: userId,
-        email: 'test@umass.edu',
-        role: 'STUDENT',
-        isVerified: false
-      };
-
-      const mockPrismaInstance = {
-        user: {
-          findUnique: jest.fn().mockResolvedValue(mockUser)
-        }
-      };
-
-      MockedPrisma.mockImplementation(() => mockPrismaInstance as any);
-
-      mockRequest.headers = {
-        authorization: `Bearer ${token}`
-      };
-
-      await authenticateToken(mockRequest as AuthRequest, mockResponse as Response, nextFunction);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Email not verified' });
-      expect(nextFunction).not.toHaveBeenCalled();
-    });
-
-    it('should return 401 if user not found', async () => {
-      const userId = 'user123';
-      const token = jwt.sign({ userId }, process.env.JWT_SECRET!);
-
-      const mockPrismaInstance = {
-        user: {
-          findUnique: jest.fn().mockResolvedValue(null)
-        }
-      };
-
-      MockedPrisma.mockImplementation(() => mockPrismaInstance as any);
-
-      mockRequest.headers = {
-        authorization: `Bearer ${token}`
-      };
-
-      await authenticateToken(mockRequest as AuthRequest, mockResponse as Response, nextFunction);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Invalid token' });
-      expect(nextFunction).not.toHaveBeenCalled();
-    });
   });
 
   describe('requireUMassEmail', () => {

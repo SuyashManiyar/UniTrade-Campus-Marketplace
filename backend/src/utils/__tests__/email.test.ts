@@ -40,32 +40,36 @@ describe('Email Utilities', () => {
 
     it('should return true when real emails are disabled (development mode)', async () => {
       process.env.SEND_REAL_EMAILS = 'false';
-      
+
       const result = await sendVerificationEmail('test@umass.edu', '123456');
-      
+
       expect(result).toBe(true);
     });
 
     it('should log verification code when real emails are disabled', async () => {
       process.env.SEND_REAL_EMAILS = 'false';
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       await sendVerificationEmail('test@umass.edu', '123456');
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Verification email for test@umass.edu')
       );
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should handle missing email configuration gracefully', async () => {
       process.env.SEND_REAL_EMAILS = 'true';
-      // Don't set SMTP credentials
-      
+      // Don't set SMTP credentials - this will cause nodemailer to fail
+      delete process.env.SMTP_USER;
+      delete process.env.SMTP_PASS;
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const result = await sendVerificationEmail('test@umass.edu', '123456');
-      
-      // Should return false when transporter can't be created
+      consoleSpy.mockRestore();
+
+      // Should return false when email sending fails
       expect(result).toBe(false);
     });
   });
