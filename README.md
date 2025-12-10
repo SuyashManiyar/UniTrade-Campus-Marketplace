@@ -1,292 +1,419 @@
-# UMass Marketplace
+# 🎓 UniTrade - Campus Marketplace Platform
 
-A secure web application that helps the UMass Amherst community buy and sell used goods by matching buyers and sellers. The platform enables users to trade second-hand items such as furniture, textbooks, fans, bikes, and electronics within a safe and structured campus environment.
+A full-stack marketplace platform built exclusively for UMass students to buy, sell, and auction items within a trusted, verified community.
 
-## 🎯 Project Status: **FULLY FUNCTIONAL** ✅
+![Tech Stack](https://img.shields.io/badge/Next.js-14-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+![Node.js](https://img.shields.io/badge/Node.js-20-green)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748)
 
-The UMass Marketplace is complete and ready for use with all core features implemented:
-- ✅ User registration with UMass email verification
-- ✅ Beautiful 6-digit OTP input system
-- ✅ Secure JWT-based authentication
-- ✅ Complete marketplace with search and filters
-- ✅ Admin dashboard for content management
-- ✅ Real-time messaging system
-- ✅ Auction and direct sale support
-- ✅ User ratings and reviews
-- ✅ Gmail SMTP integration for email verification
+---
 
-## 🚀 Tech Stack
+## 📋 Table of Contents
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [Project Structure](#-project-structure)
+- [API Documentation](#-api-documentation)
+- [Environment Variables](#-environment-variables)
+- [Scripts](#-scripts)
+- [Contributing](#-contributing)
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication & Security
+- UMass email verification required
+- JWT-based authentication
+- Secure password hashing with bcrypt
+- Role-based access control (Student, Staff, Admin)
+
+### 🛍️ Marketplace
+- **Direct Sales**: Post items with fixed prices
+- **Auctions**: Real-time bidding with live updates
+- **Smart Search**: AI-powered natural language search
+- **Categories**: Electronics, Furniture, Textbooks, Bikes, Clothing, Other
+- **Filters**: Category, condition, price range, status
+
+### 💬 Communication
+- Real-time messaging between buyers and sellers
+- Conversation organized by listing
+- Unread message notifications
+- Delete conversations
+
+### ❤️ Wishlist
+- Save favorite items
+- Automatically filters out sold items
+- Quick access to saved listings
+
+### 👤 User Profiles
+- Customizable profiles with pronouns, major, location, bio
+- View seller information before purchasing
+- Member since date
+
+### 🛡️ Admin Panel
+- Dashboard with statistics
+- User management
+- Listing moderation
+- Report system for inappropriate content
+- Permanently delete listings
+
+### 🔔 Real-Time Features
+- Live auction bid updates
+- Instant messaging
+- Real-time notifications
+- WebSocket-powered
+
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework with UMass branding
-- **React Hook Form** - Form validation and management
-- **React Query** - Data fetching and caching
-- **Zod** - Schema validation
-- **React Hot Toast** - Beautiful notifications
-- **Custom OTP Component** - 6-digit verification input
+- **Framework**: Next.js 14 (React)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: React Context
+- **HTTP Client**: Axios
+- **Real-time**: Socket.IO Client
+- **Notifications**: React Hot Toast
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework with security middleware
-- **TypeScript** - Type-safe JavaScript
-- **Prisma** - Modern ORM with SQLite database
-- **JWT** - Secure token-based authentication
-- **Nodemailer** - Email verification system
-- **Zod** - API validation
-- **Helmet** - Security headers
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: SQLite (Development) / PostgreSQL (Production)
+- **ORM**: Prisma
+- **Authentication**: JWT + Bcrypt
+- **File Upload**: Multer
+- **Email**: Nodemailer
+- **Real-time**: Socket.IO
+- **AI**: Google Gemini API
+- **Validation**: Zod
 
-### Database
-- **SQLite** - Lightweight database (perfect for development)
-- **Prisma Studio** - Database GUI and management
+---
 
-### Development Tools
-- **npm** - Package manager
-- **Concurrently** - Run multiple commands simultaneously
-- **Nodemon** - Auto-restart development server
-- **Custom dev tools** - Verification code viewer
-
-## 📁 Project Structure
-
-```
-UMass-Marketplace/
-├── frontend/                    # Next.js frontend application
-│   ├── app/                    # App Router pages
-│   │   ├── auth/              # Authentication pages (login/register)
-│   │   ├── marketplace/       # Main marketplace pages
-│   │   ├── admin/             # Admin dashboard
-│   │   └── dev/               # Development tools
-│   ├── components/            # Reusable React components
-│   │   └── OTPInput.tsx       # Custom 6-digit OTP input
-│   ├── lib/                   # Utility functions
-│   │   ├── api.ts             # Axios API client
-│   │   └── auth-context.tsx   # Authentication context
-│   └── package.json
-├── backend/                     # Express.js backend API
-│   ├── src/
-│   │   ├── middleware/        # Authentication middleware
-│   │   ├── routes/            # API routes
-│   │   │   ├── auth.ts        # Authentication endpoints
-│   │   │   ├── users.ts       # User management
-│   │   │   ├── listings.ts    # Marketplace listings
-│   │   │   ├── messages.ts    # In-app messaging
-│   │   │   ├── admin.ts       # Admin endpoints
-│   │   │   └── dev.ts         # Development tools
-│   │   └── utils/             # Utility functions
-│   │       ├── email.ts       # Email verification system
-│   │       └── validation.ts  # Zod schemas
-│   ├── prisma/                # Database schema and seed
-│   │   ├── schema.prisma      # Database models
-│   │   └── seed.ts            # Sample data generator
-│   ├── scripts/               # Utility scripts
-│   │   └── make-admin.js      # Admin user creation
-│   └── package.json
-├── database/                    # Database-related files
-├── FRIEND_SETUP.md             # Setup guide for collaborators
-├── QUICK_START.md              # Quick start instructions
-└── package.json                # Root workspace management
-```
-
-## 🛠️ Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- Node.js (v18 or higher)
-- npm (v9 or higher)
-- PostgreSQL (v13 or higher)
+- Node.js 18+ and npm
+- Git
 
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd UMass-Marketplace
-   ```
-
-2. **Install all dependencies**
-   ```bash
-   npm run install:all
-   ```
-
-3. **Set up environment variables**
-   
-   **Backend (.env)**
-   ```bash
-   cp backend/.env.example backend/.env
-   ```
-   
-   **Frontend (.env.local)**
-   ```bash
-   cp frontend/.env.example frontend/.env.local
-   ```
-
-4. **Configure your database and email**
-   - Database uses SQLite by default (no setup required)
-   - `DATABASE_URL="file:./dev.db"` in `backend/.env`
-   - Configure email settings for verification codes (optional - defaults to console logging)
-
-5. **Set up the database**
-   ```bash
-   # Generate Prisma client
-   npm run db:generate
-   
-   # Push schema to database
-   npm run db:push
-   
-   # Or run migrations (recommended for production)
-   npm run db:migrate
-   ```
-
-6. **Seed the database with dummy data (optional)**
-   ```bash
-   # Navigate to backend directory
-   cd backend
-   
-   # Run the seed script to add 50 dummy listings
-   npm run seed
-   ```
-   
-   This will create:
-   - 5 dummy users with UMass email addresses
-   - 50 sample listings including laptops, furniture, textbooks, bikes, and other student items
-   - Various categories: Electronics, Furniture, Textbooks, Bikes, Clothing, and Other
-
-## 🚀 Development
-
-### Start Development Servers
-
 ```bash
-# Start both frontend and backend in development mode
+git clone <repository-url>
+cd UniTrade-Campus-Marketplace
+```
+
+2. **Install Backend Dependencies**
+```bash
+cd backend
+npm install
+```
+
+3. **Install Frontend Dependencies**
+```bash
+cd ../frontend
+npm install
+```
+
+4. **Set up Environment Variables**
+
+Backend `.env`:
+```env
+DATABASE_URL="file:./dev.db"
+PORT=8080
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+JWT_SECRET=your-secret-key-here
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+GEMINI_API_KEY=your-gemini-api-key
+```
+
+Frontend `.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+```
+
+5. **Initialize Database**
+```bash
+cd backend
+npx prisma generate
+npx prisma db push
+```
+
+6. **Seed Database (Optional)**
+```bash
+npm run seed:images
+```
+
+7. **Run Development Servers**
+
+Terminal 1 (Backend):
+```bash
+cd backend
 npm run dev
 ```
 
-This will start:
+Terminal 2 (Frontend):
+```bash
+cd frontend
+npm run dev
+```
+
+8. **Access the Application**
 - Frontend: http://localhost:3000
-- Backend: http://localhost:5000
+- Backend API: http://localhost:8080
 
-### Individual Commands
+---
 
-```bash
-# Frontend only
-npm run dev:frontend
+## 📁 Project Structure
 
-# Backend only
-npm run dev:backend
-
-# Database management
-npm run db:studio    # Open Prisma Studio
-npm run db:generate  # Generate Prisma client
-npm run db:push      # Push schema changes
-npm run db:migrate   # Run database migrations
+```
+UniTrade/
+├── backend/
+│   ├── src/
+│   │   ├── routes/          # API endpoints
+│   │   ├── middleware/      # Auth, upload, etc.
+│   │   ├── services/        # Business logic
+│   │   ├── socket/          # WebSocket handlers
+│   │   ├── utils/           # Helper functions
+│   │   ├── app.ts           # Express setup
+│   │   └── server.ts        # Entry point
+│   ├── prisma/
+│   │   └── schema.prisma    # Database schema
+│   ├── scripts/             # Utility scripts
+│   ├── uploads/             # Uploaded images
+│   └── package.json
+│
+├── frontend/
+│   ├── app/                 # Next.js pages
+│   │   ├── auth/            # Login, register
+│   │   ├── marketplace/     # Main app
+│   │   ├── messages/        # Chat
+│   │   ├── admin/           # Admin panel
+│   │   └── profile/         # User profile
+│   ├── components/          # Reusable components
+│   ├── lib/                 # Utilities
+│   └── package.json
+│
+└── README.md
 ```
 
-## 🏗️ Building for Production
+---
 
-```bash
-# Build both frontend and backend
-npm run build
+## 📡 API Documentation
 
-# Start production servers
-npm run start
+### Authentication
+```
+POST   /api/auth/register       - Create account
+POST   /api/auth/verify         - Verify email
+POST   /api/auth/login          - Login
+POST   /api/auth/logout         - Logout
+GET    /api/auth/me             - Get current user
 ```
 
-## 📊 Database Management
-
-### Prisma Commands
-
-```bash
-# Generate Prisma client after schema changes
-npm run db:generate
-
-# Push schema changes to database (development)
-npm run db:push
-
-# Create and run migrations (production)
-npm run db:migrate
-
-# Open Prisma Studio (database GUI)
-npm run db:studio
+### Listings
+```
+GET    /api/listings            - Get all listings
+POST   /api/listings/nlp-search - AI search
+GET    /api/listings/:id        - Get listing
+POST   /api/listings            - Create listing
+PUT    /api/listings/:id        - Update listing
+DELETE /api/listings/:id        - Delete listing
+POST   /api/listings/:id/bid    - Place bid
 ```
 
-### Database Schema
+### Messages
+```
+GET    /api/messages/conversations              - Get conversations
+GET    /api/messages/conversation/:id/:userId   - Get messages
+POST   /api/messages                            - Send message
+DELETE /api/messages/conversation/:id/:userId   - Delete conversation
+```
 
-The application includes the following models in `backend/prisma/schema.prisma`:
+### Wishlist
+```
+GET    /api/wishlist            - Get wishlist
+POST   /api/wishlist/:id        - Add to wishlist
+DELETE /api/wishlist/:id        - Remove from wishlist
+GET    /api/wishlist/check/:id  - Check if in wishlist
+```
 
-- **User** - UMass community members with email verification
-- **Listing** - Items for sale (direct sale or auction)
-- **Bid** - Auction bids
-- **Message** - In-app messaging between users
-- **Review** - User ratings and reviews
-- **Report** - Safety reporting system
+### Admin
+```
+GET    /api/admin/stats         - Dashboard stats
+GET    /api/admin/users         - Get all users
+GET    /api/admin/listings      - Get all listings
+PUT    /api/admin/listings/:id/status - Update status
+DELETE /api/admin/listings/:id  - Delete listing
+```
 
-## 🔧 Configuration
+---
 
-### Environment Variables
-
-**Backend (.env)**
-- `DATABASE_URL` - PostgreSQL connection string
-- `PORT` - Backend server port (default: 5000)
-- `NODE_ENV` - Environment (development/production)
-- `FRONTEND_URL` - Frontend URL for CORS
-- `JWT_SECRET` - JWT signing secret
-- `SMTP_HOST` - Email server host
-- `SMTP_PORT` - Email server port
-- `SMTP_USER` - Email username
-- `SMTP_PASS` - Email password
-
-**Frontend (.env.local)**
-- `NEXT_PUBLIC_API_URL` - Backend API URL
-- `NEXT_PUBLIC_APP_NAME` - Application name
-- `NEXT_PUBLIC_APP_VERSION` - Application version
-
-## 📝 Available Scripts
-
-### Root Level
-- `npm run dev` - Start both frontend and backend
-- `npm run build` - Build both applications
-- `npm run install:all` - Install all dependencies
-- `npm run db:*` - Database management commands
-
-### Frontend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+## 🔑 Environment Variables
 
 ### Backend
-- `npm run dev` - Start development server with nodemon
-- `npm run build` - Compile TypeScript
-- `npm run start` - Start production server
-- `npm run seed` - Populate database with dummy data
 
-## 🚀 Deployment
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | Database connection string | Yes |
+| `PORT` | Server port | Yes |
+| `JWT_SECRET` | Secret for JWT signing | Yes |
+| `FRONTEND_URL` | Frontend URL for CORS | Yes |
+| `SMTP_HOST` | Email server host | Yes |
+| `SMTP_PORT` | Email server port | Yes |
+| `SMTP_USER` | Email username | Yes |
+| `SMTP_PASS` | Email password | Yes |
+| `GEMINI_API_KEY` | Google Gemini API key | Optional |
 
-### Frontend (Vercel/Netlify)
-1. Build the frontend: `npm run build:frontend`
-2. Deploy the `frontend/out` directory
+### Frontend
 
-### Backend (Railway/Heroku/DigitalOcean)
-1. Build the backend: `npm run build:backend`
-2. Set environment variables
-3. Deploy the `backend/dist` directory
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | Yes |
 
-### Database
-- Use a managed PostgreSQL service (Railway, Supabase, or AWS RDS)
-- Update the `DATABASE_URL` in your production environment
+---
 
-## 🤝 Contributing
+## 📜 Scripts
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test your changes
-5. Submit a pull request
+### Backend Scripts
 
-## 📄 License
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm start            # Start production server
+npm run seed:images  # Seed database with dummy data
+npm run make-admin   # Make user admin
+npm run update-profiles # Update user profiles
+```
 
-This project is licensed under the ISC License.
+### Frontend Scripts
 
-## 🆘 Support
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm start            # Start production server
+npm run lint         # Run ESLint
+```
 
-If you encounter any issues, please check the documentation or create an issue in the repository.
+---
+
+## 🎯 Key Features Explained
+
+### AI-Powered Search
+Uses Google Gemini to understand natural language queries:
+- "laptop under $500" → Extracts category and price
+- "good condition bike" → Extracts condition and category
+- Falls back to keyword search if AI unavailable
+
+### Real-Time Auctions
+- WebSocket-based live updates
+- Instant bid notifications
+- Leaderboard with rankings
+- Automatic winner detection
+
+### Smart Wishlist
+- Automatically hides sold items
+- Sorted by most popular
+- Quick add/remove from any page
+
+### Admin Moderation
+- Report system for users
+- Auto-flag listings with multiple reports
+- Permanent deletion capability
+- User and listing management
+
+---
+
+## 🔒 Security Features
+
+- ✅ UMass email verification
+- ✅ JWT authentication with HTTP-only cookies
+- ✅ Password hashing with bcrypt
+- ✅ Input validation with Zod
+- ✅ SQL injection prevention (Prisma ORM)
+- ✅ XSS protection (React escaping)
+- ✅ CORS configuration
+- ✅ Rate limiting
+- ✅ Admin role-based access
+
+---
+
+## 🧪 Testing
+
+### Manual Testing
+1. Register with UMass email
+2. Verify email with code
+3. Create a listing
+4. Search for items
+5. Add to wishlist
+6. Message a seller
+7. Place a bid on auction
+
+### Test Accounts
+After running `npm run seed:images`:
+- naveen@umass.edu
+- snarayana@umass.edu
+- smanayar@umass.edu
+- rtumati@umass.edu
+- cmadadi@umass.edu
+
+Make admin: `npm run make-admin <email>`
+
+---
+
+## 🚧 Known Limitations
+
+- SQLite for development (migrate to PostgreSQL for production)
+- Local file storage for images (use S3/Cloudinary for production)
+- No payment integration (would add Stripe)
+- No mobile app (web-only currently)
+
+---
+
+## 🔮 Future Enhancements
+
+- [ ] Mobile app (React Native)
+- [ ] Payment integration (Stripe)
+- [ ] Push notifications
+- [ ] Advanced analytics
+- [ ] Seller verification badges
+- [ ] Meetup location suggestions
+- [ ] Price history tracking
+- [ ] Saved searches
+- [ ] Email notifications
+
+---
+
+## 📝 License
+
+This project is for educational purposes.
+
+---
+
+## 👥 Team
+
+- **Naveen** - Full Stack Developer
+- **Sreehitha** - Developer
+- **Suyash** - Developer
+- **Rohit** - Developer
+- **Chetan** - Developer
+
+---
+
+## 🙏 Acknowledgments
+
+- UMass Amherst for inspiration
+- Google Gemini for AI capabilities
+- Open source community for amazing tools
+
+---
+
+
+**Built with ❤️ for the UMass community**
