@@ -387,19 +387,11 @@ This project is for educational purposes.
 
 ## 👥 Team
 
-- **Naveen** - Full Stack Developer
+- **Naveen** - Developer
 - **Sreehitha** - Developer
 - **Suyash** - Developer
 - **Rohit** - Developer
 - **Chetan** - Developer
-
----
-
-## 🙏 Acknowledgments
-
-- UMass Amherst for inspiration
-- Google Gemini for AI capabilities
-- Open source community for amazing tools
 
 ---
 
