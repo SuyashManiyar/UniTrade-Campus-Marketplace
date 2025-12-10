@@ -360,22 +360,8 @@ Make admin: `npm run make-admin <email>`
 
 - SQLite for development (migrate to PostgreSQL for production)
 - Local file storage for images (use S3/Cloudinary for production)
-- No payment integration (would add Stripe)
+- No payment integration
 - No mobile app (web-only currently)
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] Mobile app (React Native)
-- [ ] Payment integration (Stripe)
-- [ ] Push notifications
-- [ ] Advanced analytics
-- [ ] Seller verification badges
-- [ ] Meetup location suggestions
-- [ ] Price history tracking
-- [ ] Saved searches
-- [ ] Email notifications
 
 ---
 
