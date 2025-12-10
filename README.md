@@ -348,22 +348,9 @@ Uses Google Gemini to understand natural language queries:
 
 ## 🧪 Testing
 
-### Manual Testing
-1. Register with UMass email
-2. Verify email with code
-3. Create a listing
-4. Search for items
-5. Add to wishlist
-6. Message a seller
-7. Place a bid on auction
-
 ### Test Accounts
 After running `npm run seed:images`:
-- naveen@umass.edu
-- snarayana@umass.edu
-- smanayar@umass.edu
-- rtumati@umass.edu
-- cmadadi@umass.edu
+- username@umass.edu
 
 Make admin: `npm run make-admin <email>`
 
